@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getLesson, hasItem } from './data';
-import { generateLesson, generateReview } from './exercises/generate';
+import { generateLesson, generateRecap, generateReview } from './exercises/generate';
 import type { ExerciseOutcome } from './exercises/types';
 import {
   applyReview,
@@ -30,6 +30,7 @@ type Screen =
   | { name: 'home' }
   | { name: 'lesson'; lessonId: string }
   | { name: 'review' }
+  | { name: 'recap' }
   | { name: 'stats' }
   | { name: 'summary'; xpGained: number; mistakes: number };
 
@@ -80,6 +81,9 @@ export default function App() {
     }
     if (screen.name === 'review') {
       return generateReview(knownDueIds(progress).slice(0, 20), progress, strokeChars);
+    }
+    if (screen.name === 'recap') {
+      return generateRecap(progress, strokeChars);
     }
     return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,16 +150,19 @@ export default function App() {
           xp={app.xp}
           streak={effectiveStreak(app.streak)}
           dueCount={knownDueIds(progress).length}
+          learnedCount={Object.keys(progress).length}
           onOpenLesson={(lessonId) => setScreen({ name: 'lesson', lessonId })}
           onOpenReview={() => setScreen({ name: 'review' })}
+          onOpenRecap={() => setScreen({ name: 'recap' })}
           onOpenStats={() => setScreen({ name: 'stats' })}
         />
       );
     case 'lesson':
     case 'review':
+    case 'recap':
       return (
         <ExerciseRunner
-          key={screen.name === 'lesson' ? screen.lessonId : 'review'}
+          key={screen.name === 'lesson' ? screen.lessonId : screen.name}
           exercises={sessionExercises}
           strokeChars={strokeChars}
           ttsEnabled={app.settings.ttsEnabled}

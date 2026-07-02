@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import type { Exercise, ExerciseOutcome } from '../exercises/types';
-import { makeMcq } from '../exercises/generate';
-import { getItem, primaryLabel, displayChars } from '../data';
+import { makeMcq, romajiAnswers } from '../exercises/generate';
+import { getItem, primaryLabel, displayChars, spokenText } from '../data';
 import Flashcard from './Flashcard';
 import Mcq from './Mcq';
 import StrokeQuiz from './StrokeQuiz';
+import TypeAnswer from './TypeAnswer';
 
 interface Props {
   exercises: Exercise[];
@@ -101,6 +102,49 @@ export default function ExerciseRunner({
           onDone={(correct) => recordAndAdvance(correct)}
         />
       )}
+
+      {current.kind === 'typeRomaji' &&
+        (() => {
+          const item = getItem(current.itemId);
+          const accepted = romajiAnswers(item);
+          return (
+            <TypeAnswer
+              key={`${idx}`}
+              title="Écris la lecture en rōmaji"
+              display={displayChars(item)}
+              displaySmall={displayChars(item).length > 1}
+              placeholder="romaji…"
+              accept={(input) => accepted.has(input.toLowerCase())}
+              correctAnswer={item.type === 'kanji' ? primaryLabel(item) : item.romaji}
+              ttsText={spokenText(item)}
+              ttsEnabled={ttsEnabled}
+              onDone={(correct) => recordAndAdvance(correct)}
+            />
+          );
+        })()}
+
+      {current.kind === 'typeKana' &&
+        (() => {
+          const item = getItem(current.itemId);
+          if (item.type !== 'vocab') return null;
+          return (
+            <TypeAnswer
+              key={`${idx}`}
+              title="Écris ce mot en japonais"
+              hint="Utilise le clavier japonais 🇯🇵 (à activer dans Réglages ▸ Général ▸ Clavier)"
+              display={item.meaningFr}
+              displaySmall
+              sub={item.romaji}
+              placeholder="かな…"
+              lang="ja"
+              accept={(input) => input === item.kana}
+              correctAnswer={item.kana}
+              ttsText={item.kana}
+              ttsEnabled={ttsEnabled}
+              onDone={(correct) => recordAndAdvance(correct)}
+            />
+          );
+        })()}
 
       {current.kind === 'trace' && (
         <div className="exercise" key={`${idx}`}>

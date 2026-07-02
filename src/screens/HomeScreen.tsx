@@ -5,8 +5,11 @@ interface Props {
   xp: number;
   streak: number;
   dueCount: number;
+  /** Nombre d'items déjà appris (pour proposer la leçon récap). */
+  learnedCount: number;
   onOpenLesson: (lessonId: string) => void;
   onOpenReview: () => void;
+  onOpenRecap: () => void;
   onOpenStats: () => void;
 }
 
@@ -16,8 +19,10 @@ export default function HomeScreen({
   xp,
   streak,
   dueCount,
+  learnedCount,
   onOpenLesson,
   onOpenReview,
+  onOpenRecap,
   onOpenStats,
 }: Props) {
   const completed = new Set(completedLessonIds);
@@ -41,6 +46,15 @@ export default function HomeScreen({
           </span>
           <button className="btn btn-blue" onClick={onOpenReview}>
             Réviser
+          </button>
+        </div>
+      )}
+
+      {learnedCount >= 5 && (
+        <div className="review-banner recap-banner">
+          <span>🎲 Leçon récap — {Math.min(10, learnedCount)} caractères au hasard</span>
+          <button className="btn btn-gold" onClick={onOpenRecap}>
+            Lancer
           </button>
         </div>
       )}
