@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { AppState, ProgressMap } from '../storage/db';
+import { effectiveStreak, type AppState, type ProgressMap } from '../storage/db';
 import { exportBackup, importBackup } from '../storage/backup';
 import { isMastered } from '../srs/sm2';
 
@@ -40,7 +40,7 @@ export default function StatsScreen({ app, progress, onToggleTts, onImported, on
 
       <div className="stats-grid">
         <div className="stats-cell">
-          <div className="stats-value">🔥 {app.streak.current}</div>
+          <div className="stats-value">🔥 {effectiveStreak(app.streak)}</div>
           <div className="stats-label">série (record : {app.streak.best})</div>
         </div>
         <div className="stats-cell">

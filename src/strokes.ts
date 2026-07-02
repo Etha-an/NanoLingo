@@ -19,7 +19,11 @@ export function loadStrokeManifest(): Promise<Set<string>> {
       return r.json() as Promise<{ chars: string[] }>;
     })
     .then((m) => new Set(m.chars))
-    .catch(() => new Set<string>());
+    .catch(() => {
+      // Échec transitoire : ne pas mémoriser un manifest vide pour toujours.
+      manifest = null;
+      return new Set<string>();
+    });
   return manifest;
 }
 

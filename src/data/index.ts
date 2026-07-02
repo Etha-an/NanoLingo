@@ -19,6 +19,12 @@ for (const item of KATAKANA) registry.set(item.id, { type: 'kana', ...item });
 for (const item of KANJI_N5) registry.set(item.id, { type: 'kanji', ...item });
 for (const item of VOCAB) registry.set(item.id, { type: 'vocab', ...item });
 
+/** Un item peut disparaître du contenu (ex : sauvegarde restaurée après une
+ * mise à jour) — la progression orpheline doit être ignorée, pas planter. */
+export function hasItem(id: ItemId): boolean {
+  return registry.has(id);
+}
+
 export function getItem(id: ItemId): StudyItem {
   const item = registry.get(id);
   if (!item) throw new Error(`Item inconnu : ${id}`);

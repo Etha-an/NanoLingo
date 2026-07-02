@@ -34,6 +34,15 @@ function pickDistractors(target: StudyItem): ItemId[] {
     if (candidate.type !== target.type) return false;
     if (candidate.type === 'kana' && target.type === 'kana' && candidate.script !== target.script)
       return false;
+    if (candidate.type === 'vocab' && target.type === 'vocab' && candidate.script !== target.script)
+      return false;
+    // Deux kanji partageant un sens (天/空 « ciel ») rendraient le QCM ambigu.
+    if (
+      candidate.type === 'kanji' &&
+      target.type === 'kanji' &&
+      candidate.meaningsFr.some((m) => target.meaningsFr.includes(m))
+    )
+      return false;
     if (primaryLabel(candidate) === targetLabel) return false;
     if (displayChars(candidate) === targetChars) return false;
     return true;

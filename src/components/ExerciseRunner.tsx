@@ -42,9 +42,9 @@ export default function ExerciseRunner({
   const current = queue[idx];
   const progressPct = Math.round((idx / queue.length) * 100);
 
-  const advance = (nextOutcomes: ExerciseOutcome[]) => {
+  const advance = (nextQueue: QueueEntry[], nextOutcomes: ExerciseOutcome[]) => {
     setTraceDone(null);
-    if (idx + 1 >= queue.length) {
+    if (idx + 1 >= nextQueue.length) {
       onFinish(nextOutcomes);
     } else {
       setIdx(idx + 1);
@@ -58,10 +58,14 @@ export default function ExerciseRunner({
       nextOutcomes = [...outcomes, { itemId: current.itemId, correct, ...extra }];
       setOutcomes(nextOutcomes);
     }
+    // Une erreur ré-empile l'exercice en fin de file (même s'il était déjà
+    // une reprise) : la session ne se termine que sur un succès.
+    let nextQueue = queue;
     if (!correct) {
-      setQueue((q) => [...q, { ...current, isRetry: true }]);
+      nextQueue = [...queue, { ...current, isRetry: true }];
+      setQueue(nextQueue);
     }
-    advance(nextOutcomes);
+    advance(nextQueue, nextOutcomes);
   };
 
   if (!current) return null;
@@ -83,7 +87,7 @@ export default function ExerciseRunner({
           item={getItem(current.itemId)}
           traceable={strokeChars.has(displayChars(getItem(current.itemId)))}
           ttsEnabled={ttsEnabled}
-          onContinue={() => advance(outcomes)}
+          onContinue={() => advance(queue, outcomes)}
         />
       )}
 

@@ -36,12 +36,28 @@ export function localDay(date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Jour local précédant `day` (insensible aux changements d'heure). */
+function previousDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return localDay(new Date(y, m - 1, d - 1));
+}
+
 /** Met à jour la flamme après une session d'étude réussie. */
 export function bumpStreak(streak: AppState['streak'], today = localDay()): AppState['streak'] {
   if (streak.lastActiveDay === today) return streak;
-  const yesterday = localDay(new Date(Date.now() - 24 * 60 * 60 * 1000));
-  const current = streak.lastActiveDay === yesterday ? streak.current + 1 : 1;
+  const current = streak.lastActiveDay === previousDay(today) ? streak.current + 1 : 1;
   return { current, best: Math.max(streak.best, current), lastActiveDay: today };
+}
+
+/**
+ * Série à AFFICHER : la valeur stockée ne retombe qu'à la session suivante,
+ * donc une chaîne rompue (dernière activité avant hier) doit se lire 0.
+ */
+export function effectiveStreak(streak: AppState['streak'], today = localDay()): number {
+  if (streak.lastActiveDay === today || streak.lastActiveDay === previousDay(today)) {
+    return streak.current;
+  }
+  return 0;
 }
 
 export async function loadProgress(): Promise<ProgressMap> {

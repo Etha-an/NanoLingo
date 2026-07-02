@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getLesson } from './data';
+import { getLesson, hasItem } from './data';
 import { generateLesson, generateReview } from './exercises/generate';
 import type { ExerciseOutcome } from './exercises/types';
 import {
   applyReview,
-  dueCount,
   dueItemIds,
   initialProgress,
   qualityFromOutcome,
@@ -12,6 +11,7 @@ import {
 } from './srs/sm2';
 import {
   bumpStreak,
+  effectiveStreak,
   loadAppState,
   loadProgress,
   requestPersistence,
@@ -32,6 +32,11 @@ type Screen =
   | { name: 'review' }
   | { name: 'stats' }
   | { name: 'summary'; xpGained: number; mistakes: number };
+
+/** Items dus dont le contenu existe encore (ignore la progression orpheline). */
+function knownDueIds(progress: ProgressMap): string[] {
+  return dueItemIds(progress, Date.now(), Number.MAX_SAFE_INTEGER).filter(hasItem);
+}
 
 export default function App() {
   const [ready, setReady] = useState(false);
@@ -74,7 +79,7 @@ export default function App() {
       return generateLesson(getLesson(screen.lessonId), strokeChars);
     }
     if (screen.name === 'review') {
-      return generateReview(dueItemIds(progress, Date.now()), progress, strokeChars);
+      return generateReview(knownDueIds(progress).slice(0, 20), progress, strokeChars);
     }
     return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,8 +144,8 @@ export default function App() {
         <HomeScreen
           completedLessonIds={app.completedLessonIds}
           xp={app.xp}
-          streak={app.streak.current}
-          dueCount={dueCount(progress, Date.now())}
+          streak={effectiveStreak(app.streak)}
+          dueCount={knownDueIds(progress).length}
           onOpenLesson={(lessonId) => setScreen({ name: 'lesson', lessonId })}
           onOpenReview={() => setScreen({ name: 'review' })}
           onOpenStats={() => setScreen({ name: 'stats' })}
