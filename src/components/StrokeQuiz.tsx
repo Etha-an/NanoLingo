@@ -61,7 +61,10 @@ export default function StrokeQuiz({ char, size, showOutline, onComplete, onFall
 
     let hintShown = false;
     writer.quiz({
-      leniency: 1.3,
+      // Tolérance du grading au doigt : les seuils de distance sont multipliés
+      // par cette valeur (la direction des traits reste vérifiée à part).
+      // 1.0 = défaut souris ; 1.6 = confortable pour les boucles (あ, ぬ, を).
+      leniency: 1.6,
       showHintAfterMisses: 2,
       onMistake: (stroke) => {
         if (stroke.mistakesOnStroke >= 2) hintShown = true;
