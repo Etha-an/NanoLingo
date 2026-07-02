@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:cdn.jsdelivr.net)",
+      "WebFetch(domain:data.jsdelivr.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:registry.npmjs.org)",
+      "WebFetch(domain:hanziwriter.org)",
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:vite-pwa-org.netlify.app)",
+      "PowerShell(node -v)",
+      "PowerShell(npm -v)",
+      "PowerShell(gh --version)",
+      "PowerShell(winget install --id OpenJS.NodeJS.LTS -e --accept-source-agreements --accept-package-agreements --disable-interactivity)",
+      "PowerShell(winget install --id GitHub.cli -e --accept-source-agreements --accept-package-agreements --disable-interactivity)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\('Path','Machine'\\) + ';' + [System.Environment]::GetEnvironmentVariable\\('Path','User'\\); node -v; npm -v; gh --version)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\('Path','Machine'\\) + ';' + [System.Environment]::GetEnvironmentVariable\\('Path','User'\\); Set-Location \"C:\\\\Users\\\\renuc\\\\Desktop\\\\NanoLingo\"; npm create vite@latest . -- --template react-ts)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\('Path','Machine'\\) + ';' + [System.Environment]::GetEnvironmentVariable\\('Path','User'\\); Set-Location \"C:\\\\Users\\\\renuc\\\\Desktop\\\\NanoLingo\"; npm install react react-dom hanzi-writer idb-keyval; if \\($?\\) { npm install -D typescript \"@types/react\" \"@types/react-dom\" \"@vitejs/plugin-react\" vite vite-plugin-pwa hanzi-writer-data-jp })",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\('Path','Machine'\\) + ';' + [System.Environment]::GetEnvironmentVariable\\('Path','User'\\); Set-Location \"C:\\\\Users\\\\renuc\\\\Desktop\\\\NanoLingo\"; npm run build)"
+    ]
+  }
+}
