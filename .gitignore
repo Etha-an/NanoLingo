@@ -3,3 +3,7 @@ dist
 dev-dist
 *.local
 .DS_Store
+
+# Source animCJK kanji trop volumineuse pour le repo (re-téléchargeable,
+# voir scripts/build-strokes.mjs) ; les JSON extraits sont commités dans public/strokes/.
+vendor/animcjk/graphicsJa.txt
