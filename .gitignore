@@ -3,6 +3,7 @@ dist
 dev-dist
 *.local
 .DS_Store
+.claude/settings.local.json
 
 # Source animCJK kanji trop volumineuse pour le repo (re-téléchargeable,
 # voir scripts/build-strokes.mjs) ; les JSON extraits sont commités dans public/strokes/.

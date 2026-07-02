@@ -1,1 +1,15 @@
-404: Not Found
+Arphic Public License
+=====================
+
+Les données de traits des KANJI utilisées par NanoLingo (extraites de
+graphicsJa.txt du projet animCJK) sont dérivées des polices Arphic KaitiM
+et distribuées sous l'Arphic Public License.
+
+Texte intégral de la licence :
+  https://ftp.gnu.org/non-gnu/chinese-fonts-truetype/LICENSE
+  (copie également disponible dans le dépôt animCJK : licenses/APL/english/)
+
+Les données de traits des KANA (graphicsJaKana.txt) sont quant à elles
+distribuées sous LGPL v3+ (voir LGPL.txt et COPYING.txt dans ce dossier).
+
+Source : https://github.com/parsimonhi/animCJK
