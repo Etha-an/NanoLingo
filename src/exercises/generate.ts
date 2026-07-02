@@ -146,8 +146,10 @@ export function generateLesson(lesson: Lesson, strokeChars: Set<string>): Exerci
 
 /**
  * File de révision : pour chaque item dû, un exercice de reconnaissance
- * (QCM ou saisie rōmaji) ; les items mûrs (intervalle > 7 j) traçables sont
- * tracés SANS silhouette, et les mots mûrs se tapent au clavier japonais.
+ * (QCM ou saisie rōmaji) ; le tracé se fait SANS modèle dès 3 jours
+ * d'intervalle (écriture de mémoire), et les items mûrs (intervalle > 7 j)
+ * ne font que le tracé de mémoire — les mots mûrs se tapent en plus au
+ * clavier japonais.
  */
 export function generateReview(
   dueIds: ItemId[],
@@ -157,7 +159,10 @@ export function generateReview(
   const queue: Exercise[] = [];
   for (const itemId of dueIds) {
     const item = getItem(itemId);
-    const mature = (progress[itemId]?.intervalDays ?? 0) > 7;
+    const interval = progress[itemId]?.intervalDays ?? 0;
+    const mature = interval > 7;
+    // Dès 3 j d'intervalle (2e révision réussie), on trace de mémoire.
+    const fromMemory = interval >= 3;
     if (isTraceable(item, strokeChars) && mature) {
       queue.push({ kind: 'trace', itemId, showOutline: false });
     } else {
@@ -167,7 +172,7 @@ export function generateReview(
         queue.push(makeMcq(itemId, Math.random() < 0.5 ? 'toLabel' : 'toChar'));
       }
       if (isTraceable(item, strokeChars)) {
-        queue.push({ kind: 'trace', itemId, showOutline: true });
+        queue.push({ kind: 'trace', itemId, showOutline: !fromMemory });
       }
     }
     if (item.type === 'vocab' && mature) {
@@ -180,7 +185,8 @@ export function generateReview(
 /**
  * Leçon récap : `count` items tirés au hasard parmi ceux déjà appris, avec
  * pour chacun un exercice de reconnaissance et, si possible, un exercice de
- * production (tracé, ou frappe au clavier japonais pour les mots mûrs).
+ * production. La récap est un auto-test : le tracé y est TOUJOURS de
+ * mémoire, sans modèle (l'aide n'apparaît qu'après deux ratés sur un trait).
  */
 export function generateRecap(
   progress: Record<ItemId, ItemProgress>,
@@ -201,7 +207,7 @@ export function generateRecap(
     if (item.type === 'vocab' && mature) {
       queue.push({ kind: 'typeKana', itemId });
     } else if (isTraceable(item, strokeChars)) {
-      queue.push({ kind: 'trace', itemId, showOutline: !mature });
+      queue.push({ kind: 'trace', itemId, showOutline: false });
     }
   }
   return shuffle(queue);
