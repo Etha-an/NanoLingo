@@ -436,6 +436,89 @@ button {
   padding-top: 16px;
 }
 
+/* ---- Furigana ---- */
+
+ruby rt {
+  font-size: 0.28em;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* ---- Écoute ---- */
+
+.listen-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.listen-btn {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  font-size: 48px;
+  background: var(--blue);
+  box-shadow: 0 6px 0 var(--blue-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.listen-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 var(--blue-shadow);
+}
+
+/* ---- Dictionnaire ---- */
+
+.dict-search {
+  font-size: 16px;
+  text-align: left;
+  margin-bottom: 14px;
+}
+
+.dict-group-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--muted);
+  margin: 8px 0;
+}
+
+.dict-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dict-cell {
+  min-width: 52px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--card);
+  border: 2px solid var(--border);
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dict-cell.active {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.dict-detail {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dict-detail-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 /* ---- Saisie libre ---- */
 
 .type-input {

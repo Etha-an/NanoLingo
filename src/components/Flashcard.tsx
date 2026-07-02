@@ -1,4 +1,11 @@
-import { displayChars, primaryLabel, secondaryLabel, spokenText, type StudyItem } from '../data';
+import {
+  displayChars,
+  displayParts,
+  primaryLabel,
+  secondaryLabel,
+  spokenText,
+  type StudyItem,
+} from '../data';
 import { speakJapanese, ttsAvailable } from '../audio/tts';
 import StrokeAnimation from './StrokeAnimation';
 
@@ -21,7 +28,21 @@ export default function Flashcard({ item, traceable, ttsEnabled, onContinue }: P
         {traceable ? (
           <StrokeAnimation char={chars} size={200} />
         ) : (
-          <div className={`big-char${chars.length > 1 ? ' word' : ''}`}>{chars}</div>
+          (() => {
+            const parts = displayParts(item);
+            return (
+              <div className={`big-char${parts.main.length > 1 ? ' word' : ''}`}>
+                {parts.furigana ? (
+                  <ruby>
+                    {parts.main}
+                    <rt>{parts.furigana}</rt>
+                  </ruby>
+                ) : (
+                  parts.main
+                )}
+              </div>
+            );
+          })()
         )}
         <div className="intro-label">{primaryLabel(item)}</div>
         {secondaryLabel(item) && <div className="intro-sub">{secondaryLabel(item)}</div>}

@@ -8,13 +8,15 @@ import type { ItemId } from '../data/types';
  * - trace      : dessiner le caractère trait par trait
  * - typeRomaji : taper la lecture en lettres latines (clavier normal)
  * - typeKana   : taper le mot en kana avec le clavier japonais (items mûrs)
+ * - listen     : écouter (synthèse vocale) et choisir le bon caractère/mot
  */
 export type Exercise =
   | { kind: 'intro'; itemId: ItemId }
   | { kind: 'mcq'; itemId: ItemId; direction: 'toLabel' | 'toChar'; choiceIds: ItemId[] }
   | { kind: 'trace'; itemId: ItemId; showOutline: boolean }
   | { kind: 'typeRomaji'; itemId: ItemId }
-  | { kind: 'typeKana'; itemId: ItemId };
+  | { kind: 'typeKana'; itemId: ItemId }
+  | { kind: 'listen'; itemId: ItemId; choiceIds: ItemId[] };
 
 /** Résultat d'un exercice terminé (l'intro ne produit pas de résultat). */
 export interface ExerciseOutcome {

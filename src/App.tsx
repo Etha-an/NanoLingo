@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getLesson, hasItem } from './data';
-import { generateLesson, generateRecap, generateReview } from './exercises/generate';
+import { getItem, getLesson, hasItem, setDisplayContext } from './data';
+import {
+  generateLesson,
+  generatePractice,
+  generateRecap,
+  generateReview,
+} from './exercises/generate';
 import type { ExerciseOutcome } from './exercises/types';
+import { hasJapaneseVoice } from './audio/tts';
 import {
   applyReview,
   dueItemIds,
@@ -22,6 +28,7 @@ import {
 } from './storage/db';
 import { loadStrokeManifest } from './strokes';
 import ExerciseRunner from './components/ExerciseRunner';
+import DictionaryScreen from './screens/DictionaryScreen';
 import HomeScreen from './screens/HomeScreen';
 import StatsScreen from './screens/StatsScreen';
 import SummaryScreen from './screens/SummaryScreen';
@@ -31,6 +38,8 @@ type Screen =
   | { name: 'lesson'; lessonId: string }
   | { name: 'review' }
   | { name: 'recap' }
+  | { name: 'practice'; itemIds: string[] }
+  | { name: 'dictionary' }
   | { name: 'stats' }
   | { name: 'summary'; xpGained: number; mistakes: number };
 
@@ -73,17 +82,35 @@ export default function App() {
     });
   };
 
-  // File d'exercices de la session en cours (leçon ou révision).
+  // Contexte d'affichage : graphies kanji débloquées et mots mûrs (furigana).
+  useMemo(() => {
+    const learnedKanji = new Set<string>();
+    const matureVocab = new Set<string>();
+    for (const [id, entry] of Object.entries(progress)) {
+      if (!hasItem(id)) continue;
+      const item = getItem(id);
+      if (item.type === 'kanji') learnedKanji.add(item.char);
+      if (item.type === 'vocab' && entry.intervalDays > 7) matureVocab.add(id);
+    }
+    setDisplayContext(learnedKanji, matureVocab);
+  }, [progress]);
+
+  const listenOk = (app?.settings.ttsEnabled ?? false) && hasJapaneseVoice();
+
+  // File d'exercices de la session en cours (leçon, révision, récap, entraînement).
   const sessionExercises = useMemo(() => {
     if (!ready) return [];
     if (screen.name === 'lesson') {
-      return generateLesson(getLesson(screen.lessonId), strokeChars);
+      return generateLesson(getLesson(screen.lessonId), strokeChars, listenOk);
     }
     if (screen.name === 'review') {
-      return generateReview(knownDueIds(progress).slice(0, 20), progress, strokeChars);
+      return generateReview(knownDueIds(progress).slice(0, 20), progress, strokeChars, listenOk);
     }
     if (screen.name === 'recap') {
-      return generateRecap(progress, strokeChars);
+      return generateRecap(progress, strokeChars, listenOk);
+    }
+    if (screen.name === 'practice') {
+      return generatePractice(screen.itemIds, progress, strokeChars, listenOk);
     }
     return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,6 +141,16 @@ export default function App() {
       streak: bumpStreak(app.streak),
     };
     commit(nextProgress, nextApp);
+    setScreen({ name: 'summary', xpGained, mistakes });
+  };
+
+  // Entraînement libre : XP symbolique, aucun impact sur le planning SRS
+  // (sinon s'entraîner « tricherait » la répétition espacée).
+  const finishPractice = (outcomes: ExerciseOutcome[]) => {
+    const mistakes = outcomes.filter((o) => !o.correct).length;
+    const xpGained = Math.max(2, outcomes.filter((o) => o.correct).length);
+    const nextApp: AppState = { ...app!, xp: app!.xp + xpGained, streak: bumpStreak(app!.streak) };
+    commit(progress, nextApp);
     setScreen({ name: 'summary', xpGained, mistakes });
   };
 
@@ -154,12 +191,14 @@ export default function App() {
           onOpenLesson={(lessonId) => setScreen({ name: 'lesson', lessonId })}
           onOpenReview={() => setScreen({ name: 'review' })}
           onOpenRecap={() => setScreen({ name: 'recap' })}
+          onOpenDictionary={() => setScreen({ name: 'dictionary' })}
           onOpenStats={() => setScreen({ name: 'stats' })}
         />
       );
     case 'lesson':
     case 'review':
     case 'recap':
+    case 'practice':
       return (
         <ExerciseRunner
           key={screen.name === 'lesson' ? screen.lessonId : screen.name}
@@ -167,9 +206,23 @@ export default function App() {
           strokeChars={strokeChars}
           ttsEnabled={app.settings.ttsEnabled}
           onFinish={(outcomes) =>
-            screen.name === 'lesson' ? finishLesson(screen.lessonId, outcomes) : finishReview(outcomes)
+            screen.name === 'lesson'
+              ? finishLesson(screen.lessonId, outcomes)
+              : screen.name === 'practice'
+                ? finishPractice(outcomes)
+                : finishReview(outcomes)
           }
           onQuit={() => setScreen({ name: 'home' })}
+        />
+      );
+    case 'dictionary':
+      return (
+        <DictionaryScreen
+          progress={progress}
+          strokeChars={strokeChars}
+          ttsEnabled={app.settings.ttsEnabled}
+          onPractice={(itemIds) => setScreen({ name: 'practice', itemIds })}
+          onBack={() => setScreen({ name: 'home' })}
         />
       );
     case 'stats':

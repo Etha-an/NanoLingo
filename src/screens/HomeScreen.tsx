@@ -10,6 +10,7 @@ interface Props {
   onOpenLesson: (lessonId: string) => void;
   onOpenReview: () => void;
   onOpenRecap: () => void;
+  onOpenDictionary: () => void;
   onOpenStats: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function HomeScreen({
   onOpenLesson,
   onOpenReview,
   onOpenRecap,
+  onOpenDictionary,
   onOpenStats,
 }: Props) {
   const completed = new Set(completedLessonIds);
@@ -34,6 +36,9 @@ export default function HomeScreen({
       <div className="home-stats">
         <span className="stat-chip">🔥 {streak}</span>
         <span className="stat-chip">⭐ {xp} XP</span>
+        <button className="stat-chip" onClick={onOpenDictionary} aria-label="Dictionnaire">
+          📖
+        </button>
         <button className="stat-chip" onClick={onOpenStats} aria-label="Statistiques">
           📊
         </button>

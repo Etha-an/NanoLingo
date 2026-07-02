@@ -40,6 +40,12 @@ export interface VocabItem {
   meaningFr: string;
   /** Syllabaire dominant du mot — place le mot dans le parcours. */
   script: Script;
+  /**
+   * Graphie usuelle en kanji (ex: 水, 名前, 子ども), uniquement si tous ses
+   * kanji font partie de notre liste N5. Affichée (avec furigana) une fois
+   * ces kanji appris.
+   */
+  kanji?: string;
 }
 
 export interface Lesson {

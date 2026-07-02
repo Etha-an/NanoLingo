@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { displayChars, getItem, primaryLabel, spokenText } from '../data';
+import { displayParts, getItem, primaryLabel, spokenText } from '../data';
 import type { ItemId } from '../data/types';
 import { speakJapanese, ttsAvailable } from '../audio/tts';
 
@@ -22,7 +22,7 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
   const correct = chosen === itemId;
 
   const choiceText = (id: ItemId) =>
-    direction === 'toLabel' ? primaryLabel(getItem(id)) : displayChars(getItem(id));
+    direction === 'toLabel' ? primaryLabel(getItem(id)) : displayParts(getItem(id)).main;
 
   const select = (id: ItemId) => {
     if (answered) return;
@@ -39,11 +39,22 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
             : 'Que signifie… ?'
           : `Trouve : ${primaryLabel(target)}`}
       </p>
-      {direction === 'toLabel' && (
-        <div className={`big-char${displayChars(target).length > 1 ? ' word' : ''}`}>
-          {displayChars(target)}
-        </div>
-      )}
+      {direction === 'toLabel' &&
+        (() => {
+          const parts = displayParts(target);
+          return (
+            <div className={`big-char${parts.main.length > 1 ? ' word' : ''}`}>
+              {parts.furigana ? (
+                <ruby>
+                  {parts.main}
+                  <rt>{parts.furigana}</rt>
+                </ruby>
+              ) : (
+                parts.main
+              )}
+            </div>
+          );
+        })()}
       <div className="choices">
         {choiceIds.map((id) => {
           let className = 'choice';
@@ -62,7 +73,7 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
           {correct ? 'Correct !' : 'Raté…'}
           {!correct && (
             <small>
-              {displayChars(target)} = {primaryLabel(target)}
+              {displayParts(target).main} = {primaryLabel(target)}
             </small>
           )}
         </div>

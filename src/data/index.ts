@@ -40,6 +40,42 @@ export function displayChars(item: StudyItem): string {
   return item.type === 'vocab' ? item.kana : item.char;
 }
 
+// ---- Contexte d'affichage : graphies kanji du vocabulaire ----
+// Un mot s'affiche en kanji (水, 名前…) une fois tous ses kanji appris,
+// avec furigana tant que le mot n'est pas mûr. Le contexte est poussé par
+// App à chaque changement de progression.
+
+let learnedKanjiChars = new Set<string>();
+let matureVocabIds = new Set<ItemId>();
+
+export function setDisplayContext(learnedKanji: Set<string>, matureVocab: Set<ItemId>): void {
+  learnedKanjiChars = learnedKanji;
+  matureVocabIds = matureVocab;
+}
+
+function isKanjiChar(c: string): boolean {
+  const cp = c.codePointAt(0)!;
+  return cp >= 0x4e00 && cp <= 0x9fff;
+}
+
+export interface DisplayParts {
+  main: string;
+  /** Lecture en kana à afficher au-dessus (null : pas de furigana). */
+  furigana: string | null;
+}
+
+export function displayParts(item: StudyItem): DisplayParts {
+  if (item.type === 'vocab' && item.kanji) {
+    const unlocked = [...item.kanji]
+      .filter(isKanjiChar)
+      .every((c) => learnedKanjiChars.has(c));
+    if (unlocked) {
+      return { main: item.kanji, furigana: matureVocabIds.has(item.id) ? null : item.kana };
+    }
+  }
+  return { main: displayChars(item), furigana: null };
+}
+
 /** L'étiquette « réponse » : romaji pour les kana, sens pour kanji/vocab. */
 export function primaryLabel(item: StudyItem): string {
   switch (item.type) {

@@ -18,6 +18,13 @@ export function ttsAvailable(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window;
 }
 
+/** Une voix japonaise est réellement disponible (requis pour les exercices d'écoute). */
+export function hasJapaneseVoice(): boolean {
+  if (!ttsAvailable()) return false;
+  if (!jaVoice) pickVoice();
+  return jaVoice !== null;
+}
+
 /** Prononce un texte japonais. À appeler depuis un geste utilisateur. */
 export function speakJapanese(text: string): void {
   if (!ttsAvailable()) return;

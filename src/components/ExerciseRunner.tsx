@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import type { Exercise, ExerciseOutcome } from '../exercises/types';
 import { makeMcq, romajiAnswers } from '../exercises/generate';
-import { getItem, primaryLabel, displayChars, spokenText } from '../data';
+import { getItem, primaryLabel, displayChars, displayParts, spokenText } from '../data';
 import Flashcard from './Flashcard';
+import Listen from './Listen';
 import Mcq from './Mcq';
 import StrokeQuiz from './StrokeQuiz';
 import TypeAnswer from './TypeAnswer';
@@ -107,12 +108,16 @@ export default function ExerciseRunner({
         (() => {
           const item = getItem(current.itemId);
           const accepted = romajiAnswers(item);
+          // Le furigana révélerait la réponse : graphie kanji seule pour les
+          // mots mûrs, sinon graphie kana.
+          const parts = displayParts(item);
+          const display = parts.furigana === null ? parts.main : displayChars(item);
           return (
             <TypeAnswer
               key={`${idx}`}
               title="Écris la lecture en rōmaji"
-              display={displayChars(item)}
-              displaySmall={displayChars(item).length > 1}
+              display={display}
+              displaySmall={display.length > 1}
               placeholder="romaji…"
               accept={(input) => accepted.has(input.toLowerCase())}
               correctAnswer={item.type === 'kanji' ? primaryLabel(item) : item.romaji}
@@ -137,7 +142,7 @@ export default function ExerciseRunner({
               sub={item.romaji}
               placeholder="かな…"
               lang="ja"
-              accept={(input) => input === item.kana}
+              accept={(input) => input === item.kana || (!!item.kanji && input === item.kanji)}
               correctAnswer={item.kana}
               ttsText={item.kana}
               ttsEnabled={ttsEnabled}
@@ -145,6 +150,15 @@ export default function ExerciseRunner({
             />
           );
         })()}
+
+      {current.kind === 'listen' && (
+        <Listen
+          key={`${idx}`}
+          itemId={current.itemId}
+          choiceIds={current.choiceIds}
+          onDone={(correct) => recordAndAdvance(correct)}
+        />
+      )}
 
       {current.kind === 'trace' && (
         <div className="exercise" key={`${idx}`}>

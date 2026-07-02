@@ -62,8 +62,10 @@ export function romajiAnswers(item: StudyItem): Set<string> {
  * Choisit 3 distracteurs pour un QCM : d'abord les caractères visuellement
  * proches (similarity.ts), puis des items du même type/syllabaire. Exclut
  * tout item dont l'étiquette est identique à la réponse (ex : じ et ぢ = 'ji').
+ * `forListening` exclut aussi les homophones (même romaji) : à l'oreille,
+ * ils seraient indiscernables de la réponse.
  */
-function pickDistractors(target: StudyItem): ItemId[] {
+function pickDistractors(target: StudyItem, forListening = false): ItemId[] {
   const targetLabel = primaryLabel(target);
   const targetChars = displayChars(target);
 
@@ -79,6 +81,13 @@ function pickDistractors(target: StudyItem): ItemId[] {
       candidate.type === 'kanji' &&
       target.type === 'kanji' &&
       candidate.meaningsFr.some((m) => target.meaningsFr.includes(m))
+    )
+      return false;
+    if (
+      forListening &&
+      candidate.type !== 'kanji' &&
+      target.type !== 'kanji' &&
+      candidate.romaji.toLowerCase() === target.romaji.toLowerCase()
     )
       return false;
     if (primaryLabel(candidate) === targetLabel) return false;
@@ -115,18 +124,35 @@ export function makeMcq(itemId: ItemId, direction: 'toLabel' | 'toChar'): Exerci
   };
 }
 
+export function makeListen(itemId: ItemId): Exercise {
+  const target = getItem(itemId);
+  return {
+    kind: 'listen',
+    itemId,
+    choiceIds: shuffle([itemId, ...pickDistractors(target, true)]),
+  };
+}
+
 /**
- * File d'exercices d'une leçon : découverte de chaque item, deux passes de
- * QCM (reconnaissance puis production), saisie de la lecture en rōmaji,
- * puis tracé des items traçables.
+ * File d'exercices d'une leçon : découverte de chaque item, une passe de
+ * reconnaissance (QCM ou écoute), une passe de production (QCM inverse),
+ * saisie de la lecture en rōmaji, puis tracé des items traçables.
  */
-export function generateLesson(lesson: Lesson, strokeChars: Set<string>): Exercise[] {
+export function generateLesson(
+  lesson: Lesson,
+  strokeChars: Set<string>,
+  listenOk: boolean,
+): Exercise[] {
   const queue: Exercise[] = [];
   for (const itemId of lesson.newItemIds) {
     queue.push({ kind: 'intro', itemId });
   }
   for (const itemId of shuffle(lesson.newItemIds)) {
-    queue.push(makeMcq(itemId, 'toLabel'));
+    if (listenOk && isTypable(getItem(itemId)) && Math.random() < 0.5) {
+      queue.push(makeListen(itemId));
+    } else {
+      queue.push(makeMcq(itemId, 'toLabel'));
+    }
   }
   for (const itemId of shuffle(lesson.newItemIds)) {
     queue.push(makeMcq(itemId, 'toChar'));
@@ -155,6 +181,7 @@ export function generateReview(
   dueIds: ItemId[],
   progress: Record<ItemId, ItemProgress>,
   strokeChars: Set<string>,
+  listenOk: boolean,
 ): Exercise[] {
   const queue: Exercise[] = [];
   for (const itemId of dueIds) {
@@ -166,11 +193,7 @@ export function generateReview(
     if (isTraceable(item, strokeChars) && mature) {
       queue.push({ kind: 'trace', itemId, showOutline: false });
     } else {
-      if (isTypable(item) && Math.random() < 0.5) {
-        queue.push({ kind: 'typeRomaji', itemId });
-      } else {
-        queue.push(makeMcq(itemId, Math.random() < 0.5 ? 'toLabel' : 'toChar'));
-      }
+      queue.push(pickRecognition(itemId, listenOk));
       if (isTraceable(item, strokeChars)) {
         queue.push({ kind: 'trace', itemId, showOutline: !fromMemory });
       }
@@ -182,6 +205,17 @@ export function generateReview(
   return shuffle(queue);
 }
 
+/** Exercice de reconnaissance tiré au hasard : QCM, saisie rōmaji ou écoute. */
+function pickRecognition(itemId: ItemId, listenOk: boolean): Exercise {
+  const item = getItem(itemId);
+  const roll = Math.random();
+  if (isTypable(item)) {
+    if (listenOk && roll < 0.33) return makeListen(itemId);
+    if (roll < 0.66) return { kind: 'typeRomaji', itemId };
+  }
+  return makeMcq(itemId, Math.random() < 0.5 ? 'toLabel' : 'toChar');
+}
+
 /**
  * Leçon récap : `count` items tirés au hasard parmi ceux déjà appris, avec
  * pour chacun un exercice de reconnaissance et, si possible, un exercice de
@@ -191,6 +225,7 @@ export function generateReview(
 export function generateRecap(
   progress: Record<ItemId, ItemProgress>,
   strokeChars: Set<string>,
+  listenOk: boolean,
   count = 10,
 ): Exercise[] {
   const learnedIds = Object.keys(progress).filter(hasItem);
@@ -199,15 +234,36 @@ export function generateRecap(
   for (const itemId of picked) {
     const item = getItem(itemId);
     const mature = (progress[itemId]?.intervalDays ?? 0) > 7;
-    if (isTypable(item) && Math.random() < 0.5) {
-      queue.push({ kind: 'typeRomaji', itemId });
-    } else {
-      queue.push(makeMcq(itemId, Math.random() < 0.5 ? 'toLabel' : 'toChar'));
-    }
+    queue.push(pickRecognition(itemId, listenOk));
     if (item.type === 'vocab' && mature) {
       queue.push({ kind: 'typeKana', itemId });
     } else if (isTraceable(item, strokeChars)) {
       queue.push({ kind: 'trace', itemId, showOutline: false });
+    }
+  }
+  return shuffle(queue);
+}
+
+/**
+ * Session d'entraînement libre (dictionnaire, caractères difficiles) :
+ * travaille les items demandés sans toucher au planning de révision.
+ */
+export function generatePractice(
+  itemIds: ItemId[],
+  progress: Record<ItemId, ItemProgress>,
+  strokeChars: Set<string>,
+  listenOk: boolean,
+): Exercise[] {
+  const queue: Exercise[] = [];
+  for (const itemId of itemIds.filter(hasItem).slice(0, 10)) {
+    const item = getItem(itemId);
+    const interval = progress[itemId]?.intervalDays ?? 0;
+    queue.push(pickRecognition(itemId, listenOk));
+    queue.push(makeMcq(itemId, 'toChar'));
+    if (isTraceable(item, strokeChars)) {
+      queue.push({ kind: 'trace', itemId, showOutline: interval < 3 });
+    } else if (item.type === 'vocab' && interval > 7) {
+      queue.push({ kind: 'typeKana', itemId });
     }
   }
   return shuffle(queue);
