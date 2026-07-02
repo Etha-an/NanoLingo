@@ -57,7 +57,7 @@ export default function HomeScreen({
               const isCurrent = lesson.id === currentLessonId;
               const locked = !isDone && !isCurrent;
               return (
-                <div key={lesson.id} style={{ textAlign: 'center' }}>
+                <div key={lesson.id} className="lesson-wrap">
                   <button
                     className={`lesson-node ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${locked ? 'locked' : ''}`}
                     disabled={locked}
