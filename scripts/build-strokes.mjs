@@ -57,6 +57,65 @@ if (needsKanji && !existsSync(KANJI_SRC)) {
 }
 
 // 3. Indexation des sources (1 ligne JSON par caractère).
+//
+// Les traits qui s'auto-intersectent (boucles de あ, ぬ, め…) sont découpés
+// par animCJK en plusieurs FORMES (d2a/d2b/d2c dans leurs SVG) animées
+// simultanément : c'est UN seul trait logique. Le .txt aplati perd ce
+// regroupement — il est reconstitué depuis les SVG officiels dans
+// vendor/animcjk/kana-stroke-groups.json (voir scripts/fetch-kana-groups.mjs).
+// Fusion : contours concaténés ; médiane de la première sous-forme conservée
+// (c'est le vrai chemin du stylo, les suivantes sont des variantes de
+// synchronisation d'animation qui partagent la même queue de points).
+const KANA_GROUPS = JSON.parse(
+  readFileSync(join(ROOT, 'vendor', 'animcjk', 'kana-stroke-groups.json'), 'utf8'),
+);
+
+const tailsMatch = (a, b, n = 2) =>
+  a.length >= n && b.length >= n && a.slice(-n).flat().join() === b.slice(-n).flat().join();
+
+function mergeSubStrokes(entry) {
+  const groups = KANA_GROUPS[entry.character];
+  if (!groups || groups.length !== entry.strokes.length) {
+    // Pas de regroupement connu (kanji) : signature de sous-forme dupliquée
+    // par sécurité — même nombre de points et queue identique au trait
+    // précédent (jamais observé dans graphicsJa.txt à ce jour).
+    const strokes = [];
+    const medians = [];
+    for (let i = 0; i < entry.medians.length; i++) {
+      const prev = medians[medians.length - 1];
+      if (
+        prev &&
+        prev.length === entry.medians[i].length &&
+        tailsMatch(prev, entry.medians[i])
+      ) {
+        console.warn(`fusion heuristique d'une sous-forme dans ${entry.character}`);
+        strokes[strokes.length - 1] += ' ' + entry.strokes[i];
+      } else {
+        strokes.push(entry.strokes[i]);
+        medians.push(entry.medians[i]);
+      }
+    }
+    return { character: entry.character, strokes, medians };
+  }
+
+  const strokes = [];
+  const medians = [];
+  for (let i = 0; i < entry.strokes.length; i++) {
+    if (i > 0 && groups[i] === groups[i - 1]) {
+      strokes[strokes.length - 1] += ' ' + entry.strokes[i];
+      if (!tailsMatch(medians[medians.length - 1], entry.medians[i])) {
+        console.warn(
+          `⚠ ${entry.character} : la sous-forme ${i + 1} (trait ${groups[i]}) n'a pas la queue attendue — médiane à contrôler`,
+        );
+      }
+    } else {
+      strokes.push(entry.strokes[i]);
+      medians.push(entry.medians[i]);
+    }
+  }
+  return { character: entry.character, strokes, medians };
+}
+
 const index = new Map(); // char -> { character, strokes, medians }
 function indexSource(path) {
   for (const line of readFileSync(path, 'utf8').split('\n')) {
@@ -64,11 +123,7 @@ function indexSource(path) {
     if (!trimmed) continue;
     const entry = JSON.parse(trimmed);
     if (wanted.has(entry.character)) {
-      index.set(entry.character, {
-        character: entry.character,
-        strokes: entry.strokes,
-        medians: entry.medians,
-      });
+      index.set(entry.character, mergeSubStrokes(entry));
     }
   }
 }
