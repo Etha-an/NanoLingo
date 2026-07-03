@@ -7,6 +7,7 @@ import Listen from './Listen';
 import Mcq from './Mcq';
 import StrokeQuiz from './StrokeQuiz';
 import TypeAnswer from './TypeAnswer';
+import { playCorrect } from '../audio/sfx';
 
 interface Props {
   exercises: Exercise[];
@@ -54,7 +55,7 @@ export default function ExerciseRunner({
   };
 
   const recordAndAdvance = (correct: boolean, extra?: Partial<ExerciseOutcome>) => {
-    if (!current) return;
+    if (!current || current.kind === 'info') return;
     let nextOutcomes = outcomes;
     if (!current.isRetry) {
       nextOutcomes = [...outcomes, { itemId: current.itemId, correct, ...extra }];
@@ -92,6 +93,43 @@ export default function ExerciseRunner({
           onContinue={() => advance(queue, outcomes)}
         />
       )}
+
+      {current.kind === 'info' && (
+        <div className="exercise" key={`${idx}`}>
+          <p className="exercise-prompt">{current.title}</p>
+          <div className="card" style={{ fontSize: 16, lineHeight: 1.6, fontWeight: 600 }}>
+            {current.body}
+          </div>
+          <div className="session-footer" style={{ marginTop: 'auto' }}>
+            <button className="btn btn-primary" onClick={() => advance(queue, outcomes)}>
+              Continuer
+            </button>
+          </div>
+        </div>
+      )}
+
+      {current.kind === 'typeKanaCopy' &&
+        (() => {
+          const item = getItem(current.itemId);
+          if (item.type !== 'vocab') return null;
+          return (
+            <TypeAnswer
+              key={`${idx}`}
+              title="Recopie ce mot avec le clavier japonais"
+              hint="Passe au clavier 🇯🇵 avec la touche 🌐"
+              display={item.kana}
+              displaySmall
+              sub={item.romaji}
+              placeholder="かな…"
+              lang="ja"
+              accept={(input) => input === item.kana || (!!item.kanji && input === item.kanji)}
+              correctAnswer={item.kana}
+              ttsText={item.kana}
+              ttsEnabled={ttsEnabled}
+              onDone={(correct) => recordAndAdvance(correct)}
+            />
+          );
+        })()}
 
       {current.kind === 'mcq' && (
         <Mcq
@@ -168,7 +206,10 @@ export default function ExerciseRunner({
               char={displayChars(getItem(current.itemId))}
               size={Math.min(320, window.innerWidth - 64)}
               showOutline={current.showOutline}
-              onComplete={(r) => setTraceDone({ mistakes: r.totalMistakes, usedHint: r.usedHint })}
+              onComplete={(r) => {
+                playCorrect();
+                setTraceDone({ mistakes: r.totalMistakes, usedHint: r.usedHint });
+              }}
               onFallback={() => {
                 // Données de traits manquantes : remplace par un QCM équivalent.
                 const replacement = { ...makeMcq(current.itemId, 'toChar'), isRetry: current.isRetry };

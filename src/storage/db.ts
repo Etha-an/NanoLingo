@@ -17,6 +17,8 @@ export interface AppState {
   };
   settings: {
     ttsEnabled: boolean;
+    /** Sons de feedback (bonne/mauvaise réponse, fin de session). */
+    sfxEnabled: boolean;
   };
 }
 
@@ -26,7 +28,7 @@ export const DEFAULT_APP_STATE: AppState = {
   completedLessonIds: [],
   xp: 0,
   streak: { current: 0, best: 0, lastActiveDay: '' },
-  settings: { ttsEnabled: true },
+  settings: { ttsEnabled: true, sfxEnabled: true },
 };
 
 export function localDay(date = new Date()): string {

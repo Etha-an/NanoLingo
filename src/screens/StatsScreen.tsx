@@ -7,11 +7,19 @@ interface Props {
   app: AppState;
   progress: ProgressMap;
   onToggleTts: () => void;
+  onToggleSfx: () => void;
   onImported: () => void;
   onBack: () => void;
 }
 
-export default function StatsScreen({ app, progress, onToggleTts, onImported, onBack }: Props) {
+export default function StatsScreen({
+  app,
+  progress,
+  onToggleTts,
+  onToggleSfx,
+  onImported,
+  onBack,
+}: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -61,6 +69,13 @@ export default function StatsScreen({ app, progress, onToggleTts, onImported, on
         <span>🔊 Prononciation (voix japonaise)</span>
         <button className="btn btn-ghost" style={{ width: 'auto', padding: '8px 14px' }} onClick={onToggleTts}>
           {app.settings.ttsEnabled ? 'Activée' : 'Coupée'}
+        </button>
+      </div>
+
+      <div className="settings-row">
+        <span>🎵 Sons de réponse</span>
+        <button className="btn btn-ghost" style={{ width: 'auto', padding: '8px 14px' }} onClick={onToggleSfx}>
+          {app.settings.sfxEnabled ? 'Activés' : 'Coupés'}
         </button>
       </div>
 

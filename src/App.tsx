@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getItem, getLesson, hasItem, setDisplayContext } from './data';
 import {
+  generateKeyboardLesson,
   generateLesson,
   generatePractice,
   generateRecap,
@@ -8,6 +9,7 @@ import {
 } from './exercises/generate';
 import type { ExerciseOutcome } from './exercises/types';
 import { hasJapaneseVoice } from './audio/tts';
+import { setSfxEnabled } from './audio/sfx';
 import {
   applyReview,
   dueItemIds,
@@ -39,6 +41,7 @@ type Screen =
   | { name: 'review' }
   | { name: 'recap' }
   | { name: 'practice'; itemIds: string[] }
+  | { name: 'keyboard' }
   | { name: 'dictionary' }
   | { name: 'stats' }
   | { name: 'summary'; xpGained: number; mistakes: number };
@@ -96,6 +99,7 @@ export default function App() {
   }, [progress]);
 
   const listenOk = (app?.settings.ttsEnabled ?? false) && hasJapaneseVoice();
+  setSfxEnabled(app?.settings.sfxEnabled ?? true);
 
   // File d'exercices de la session en cours (leçon, révision, récap, entraînement).
   const sessionExercises = useMemo(() => {
@@ -111,6 +115,9 @@ export default function App() {
     }
     if (screen.name === 'practice') {
       return generatePractice(screen.itemIds, progress, strokeChars, listenOk);
+    }
+    if (screen.name === 'keyboard') {
+      return generateKeyboardLesson();
     }
     return [];
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,6 +198,7 @@ export default function App() {
           onOpenLesson={(lessonId) => setScreen({ name: 'lesson', lessonId })}
           onOpenReview={() => setScreen({ name: 'review' })}
           onOpenRecap={() => setScreen({ name: 'recap' })}
+          onOpenKeyboard={() => setScreen({ name: 'keyboard' })}
           onOpenDictionary={() => setScreen({ name: 'dictionary' })}
           onOpenStats={() => setScreen({ name: 'stats' })}
         />
@@ -199,6 +207,7 @@ export default function App() {
     case 'review':
     case 'recap':
     case 'practice':
+    case 'keyboard':
       return (
         <ExerciseRunner
           key={screen.name === 'lesson' ? screen.lessonId : screen.name}
@@ -208,7 +217,7 @@ export default function App() {
           onFinish={(outcomes) =>
             screen.name === 'lesson'
               ? finishLesson(screen.lessonId, outcomes)
-              : screen.name === 'practice'
+              : screen.name === 'practice' || screen.name === 'keyboard'
                 ? finishPractice(outcomes)
                 : finishReview(outcomes)
           }
@@ -234,6 +243,12 @@ export default function App() {
             commit(progress, {
               ...app,
               settings: { ...app.settings, ttsEnabled: !app.settings.ttsEnabled },
+            })
+          }
+          onToggleSfx={() =>
+            commit(progress, {
+              ...app,
+              settings: { ...app.settings, sfxEnabled: !app.settings.sfxEnabled },
             })
           }
           onImported={reloadFromDb}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { displayParts, getItem, primaryLabel, spokenText } from '../data';
 import type { ItemId } from '../data/types';
 import { speakJapanese } from '../audio/tts';
+import { playCorrect, playWrong } from '../audio/sfx';
 
 interface Props {
   itemId: ItemId;
@@ -49,7 +50,11 @@ export default function Listen({ itemId, choiceIds, onDone }: Props) {
               key={id}
               className={className}
               disabled={answered}
-              onClick={() => setChosen(id)}
+              onClick={() => {
+                setChosen(id);
+                if (id === itemId) playCorrect();
+                else playWrong();
+              }}
             >
               {displayParts(getItem(id)).main}
             </button>

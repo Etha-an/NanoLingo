@@ -245,6 +245,56 @@ export function generateRecap(
 }
 
 /**
+ * Leçon guidée du clavier japonais : cartes d'instructions entrecoupées
+ * d'exercices de copie (le mot est affiché, on le recopie au clavier kana).
+ * Ne touche pas au planning de révision. Repétable à volonté.
+ */
+export function generateKeyboardLesson(): Exercise[] {
+  return [
+    {
+      kind: 'info',
+      title: 'Le clavier japonais ⌨️',
+      body: "Active-le une fois : Réglages ▸ Général ▸ Clavier ▸ Ajouter un clavier ▸ Japonais — choisis « Romaji » (touches latines, recommandé pour débuter) ou « Kana » (grille tactile). Pendant les exercices, passe au clavier japonais avec la touche 🌐.",
+    },
+    {
+      kind: 'info',
+      title: 'Le principe du mode Romaji',
+      body: 'Tape les syllabes en lettres latines, elles se transforment en kana : n-e-k-o → ねこ. Valide le mot tel quel avec « Confirmer » (ou choisis un candidat dans la barre de suggestions).',
+    },
+    { kind: 'typeKanaCopy', itemId: 'v-ねこ' },
+    { kind: 'typeKanaCopy', itemId: 'v-やま' },
+    {
+      kind: 'info',
+      title: 'ん et les sons voisés',
+      body: "ん se tape « nn » (gohan → g-o-h-a-n-n). Les sons voisés s'écrivent directement : ga → が, zu → ず, de → で…",
+    },
+    { kind: 'typeKanaCopy', itemId: 'v-ごはん' },
+    { kind: 'typeKanaCopy', itemId: 'v-みず' },
+    {
+      kind: 'info',
+      title: 'Le petit っ',
+      body: 'Double la consonne qui suit : kitte → きって, gakkou → がっこう. Note : le son long こう se tape k-o-u.',
+    },
+    { kind: 'typeKanaCopy', itemId: 'v-きって' },
+    { kind: 'typeKanaCopy', itemId: 'v-がっこう' },
+    {
+      kind: 'info',
+      title: 'Les combinaisons ゃ・ゅ・ょ',
+      body: 'Elles se tapent en une syllabe : sha → しゃ, kyo → きょ, densha → でんしゃ.',
+    },
+    { kind: 'typeKanaCopy', itemId: 'v-でんしゃ' },
+    { kind: 'typeKanaCopy', itemId: 'v-きょう' },
+    {
+      kind: 'info',
+      title: 'Le katakana et l’allongement ー',
+      body: "Tape le mot en romaji puis choisis le candidat en KATAKANA dans la barre de suggestions (terebi → テレビ). L'allongement ー est la touche tiret : ko-hi- → コーヒー.",
+    },
+    { kind: 'typeKanaCopy', itemId: 'v-テレビ' },
+    { kind: 'typeKanaCopy', itemId: 'v-コーヒー' },
+  ];
+}
+
+/**
  * Session d'entraînement libre (dictionnaire, caractères difficiles) :
  * travaille les items demandés sans toucher au planning de révision.
  */

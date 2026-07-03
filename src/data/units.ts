@@ -162,6 +162,19 @@ export const UNITS: Unit[] = [
     ],
   },
 
+  // ═══════════════════════ NOMS ET PRÉNOMS ═══════════════════════
+  {
+    id: 'u-names',
+    title: 'Noms et prénoms',
+    icon: '📛',
+    lessons: [
+      { id: 'l-names-1', title: 'Prénoms en katakana I', newItemIds: ['n-エタン', 'n-マリー', 'n-トマ', 'n-ルイ', 'n-エマ', 'n-レア'] },
+      { id: 'l-names-2', title: 'Prénoms en katakana II', newItemIds: ['n-ポール', 'n-ニコラ', 'n-ソフィー', 'n-ピエール', 'n-カミーユ', 'n-ジュリー'] },
+      { id: 'l-names-3', title: 'Noms de famille japonais I', newItemIds: ['n-やまもと', 'n-おがわ', 'n-なかがわ', 'n-やまぐち', 'n-やました'] },
+      { id: 'l-names-4', title: 'Noms de famille japonais II', newItemIds: ['n-おおにし', 'n-かねこ', 'n-きのした', 'n-かわぐち', 'n-ふるかわ'] },
+    ],
+  },
+
   // ═══════════════════ KANJI — LES NOMBRES ═══════════════════
   {
     id: 'u-kanji-nombres',

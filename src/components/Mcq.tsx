@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { displayParts, getItem, primaryLabel, spokenText } from '../data';
 import type { ItemId } from '../data/types';
 import { speakJapanese, ttsAvailable } from '../audio/tts';
+import { playCorrect, playWrong } from '../audio/sfx';
 
 interface Props {
   itemId: ItemId;
@@ -27,6 +28,8 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
   const select = (id: ItemId) => {
     if (answered) return;
     setChosen(id);
+    if (id === itemId) playCorrect();
+    else playWrong();
     if (ttsEnabled && ttsAvailable()) speakJapanese(spokenText(target));
   };
 

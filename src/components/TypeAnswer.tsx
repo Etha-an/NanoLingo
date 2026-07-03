@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { speakJapanese, ttsAvailable } from '../audio/tts';
+import { playCorrect, playWrong } from '../audio/sfx';
 
 interface Props {
   /** Consigne affichée au-dessus. */
@@ -49,6 +50,8 @@ export default function TypeAnswer({
     const ok = accept(value.trim());
     setAnswered(true);
     setCorrect(ok);
+    if (ok) playCorrect();
+    else playWrong();
     if (ttsEnabled && ttsAvailable() && ttsText) speakJapanese(ttsText);
   };
 

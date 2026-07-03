@@ -1,3 +1,6 @@
+import { useEffect } from 'react';
+import { playFinish } from '../audio/sfx';
+
 interface Props {
   xpGained: number;
   mistakes: number;
@@ -5,6 +8,10 @@ interface Props {
 }
 
 export default function SummaryScreen({ xpGained, mistakes, onContinue }: Props) {
+  useEffect(() => {
+    playFinish();
+  }, []);
+
   return (
     <div className="screen">
       <div className="summary">

@@ -5,6 +5,7 @@ import { HIRAGANA } from './hiragana';
 import { KATAKANA } from './katakana';
 import { KANJI_N5 } from './kanji-n5';
 import { VOCAB } from './vocab';
+import { NAMES } from './names';
 import { UNITS } from './units';
 import { SIMILAR_GROUPS } from './similarity';
 
@@ -18,6 +19,7 @@ for (const item of HIRAGANA) registry.set(item.id, { type: 'kana', ...item });
 for (const item of KATAKANA) registry.set(item.id, { type: 'kana', ...item });
 for (const item of KANJI_N5) registry.set(item.id, { type: 'kanji', ...item });
 for (const item of VOCAB) registry.set(item.id, { type: 'vocab', ...item });
+for (const item of NAMES) registry.set(item.id, { type: 'vocab', ...item });
 
 /** Un item peut disparaître du contenu (ex : sauvegarde restaurée après une
  * mise à jour) — la progression orpheline doit être ignorée, pas planter. */

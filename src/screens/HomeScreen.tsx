@@ -10,6 +10,7 @@ interface Props {
   onOpenLesson: (lessonId: string) => void;
   onOpenReview: () => void;
   onOpenRecap: () => void;
+  onOpenKeyboard: () => void;
   onOpenDictionary: () => void;
   onOpenStats: () => void;
 }
@@ -24,6 +25,7 @@ export default function HomeScreen({
   onOpenLesson,
   onOpenReview,
   onOpenRecap,
+  onOpenKeyboard,
   onOpenDictionary,
   onOpenStats,
 }: Props) {
@@ -59,6 +61,15 @@ export default function HomeScreen({
         <div className="review-banner recap-banner">
           <span>🎲 Leçon récap — {Math.min(10, learnedCount)} caractères au hasard</span>
           <button className="btn btn-gold" onClick={onOpenRecap}>
+            Lancer
+          </button>
+        </div>
+      )}
+
+      {learnedCount >= 10 && (
+        <div className="review-banner">
+          <span>⌨️ Apprendre le clavier japonais</span>
+          <button className="btn btn-blue" onClick={onOpenKeyboard}>
             Lancer
           </button>
         </div>
