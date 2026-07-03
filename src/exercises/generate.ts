@@ -28,10 +28,12 @@ export function isTraceable(item: StudyItem, strokeChars: Set<string>): boolean 
   return chars.length === 1 && strokeChars.has(chars[0]);
 }
 
-/** La saisie en rōmaji n'a de sens que pour les kana et le vocabulaire
- * (un kanji seul a plusieurs lectures). */
+/** La saisie n'a de sens que pour les kana et le vocabulaire (un kanji seul
+ * a plusieurs lectures) — et taper une phrase entière serait fastidieux. */
 export function isTypable(item: StudyItem): boolean {
-  return item.type !== 'kanji';
+  if (item.type === 'kanji') return false;
+  if (item.type === 'vocab' && item.tag === 'phrase') return false;
+  return true;
 }
 
 // Les macrons (ō, ū…) ne se tapent pas sur un clavier normal : on accepte
@@ -95,6 +97,12 @@ function pickDistractors(target: StudyItem, forListening = false): ItemId[] {
     return true;
   });
 
+  // Priorité des distracteurs : même domaine (nombres entre eux, phrases
+  // entre elles…), puis caractères visuellement proches, puis le reste.
+  const targetTag = target.type === 'vocab' ? target.tag : undefined;
+  const tagged = targetTag
+    ? samePool.filter((c) => c.type === 'vocab' && c.tag === targetTag)
+    : [];
   const similar = similarChars(targetChars);
   const confusable = samePool.filter((c) => similar.has(displayChars(c)));
   const rest = shuffle(samePool.filter((c) => !similar.has(displayChars(c))));
@@ -102,7 +110,7 @@ function pickDistractors(target: StudyItem, forListening = false): ItemId[] {
   const picked: StudyItem[] = [];
   const seenLabels = new Set([targetLabel]);
   const seenChars = new Set([targetChars]);
-  for (const candidate of [...shuffle(confusable), ...rest]) {
+  for (const candidate of [...shuffle(tagged), ...shuffle(confusable), ...rest]) {
     if (picked.length === 3) break;
     const label = primaryLabel(candidate);
     const chars = displayChars(candidate);
@@ -198,7 +206,7 @@ export function generateReview(
         queue.push({ kind: 'trace', itemId, showOutline: !fromMemory });
       }
     }
-    if (item.type === 'vocab' && mature) {
+    if (item.type === 'vocab' && item.tag !== 'phrase' && mature) {
       queue.push({ kind: 'typeKana', itemId });
     }
   }
@@ -235,7 +243,7 @@ export function generateRecap(
     const item = getItem(itemId);
     const mature = (progress[itemId]?.intervalDays ?? 0) > 7;
     queue.push(pickRecognition(itemId, listenOk));
-    if (item.type === 'vocab' && mature) {
+    if (item.type === 'vocab' && item.tag !== 'phrase' && mature) {
       queue.push({ kind: 'typeKana', itemId });
     } else if (isTraceable(item, strokeChars)) {
       queue.push({ kind: 'trace', itemId, showOutline: false });
@@ -312,7 +320,7 @@ export function generatePractice(
     queue.push(makeMcq(itemId, 'toChar'));
     if (isTraceable(item, strokeChars)) {
       queue.push({ kind: 'trace', itemId, showOutline: interval < 3 });
-    } else if (item.type === 'vocab' && interval > 7) {
+    } else if (item.type === 'vocab' && item.tag !== 'phrase' && interval > 7) {
       queue.push({ kind: 'typeKana', itemId });
     }
   }

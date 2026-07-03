@@ -1,4 +1,5 @@
 import {
+  bigCharClass,
   displayChars,
   displayParts,
   primaryLabel,
@@ -31,7 +32,7 @@ export default function Flashcard({ item, traceable, ttsEnabled, onContinue }: P
           (() => {
             const parts = displayParts(item);
             return (
-              <div className={`big-char${parts.main.length > 1 ? ' word' : ''}`}>
+              <div className={bigCharClass(parts.main)}>
                 {parts.furigana ? (
                   <ruby>
                     {parts.main}

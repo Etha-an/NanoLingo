@@ -42,7 +42,8 @@ export default function Listen({ itemId, choiceIds, onDone }: Props) {
       </div>
       <div className="choices">
         {choiceIds.map((id) => {
-          let className = 'choice char';
+          const text = displayParts(getItem(id)).main;
+          let className = text.length <= 3 ? 'choice char' : 'choice';
           if (answered && id === itemId) className += ' correct';
           if (answered && id === chosen && !correct) className += ' wrong';
           return (
@@ -56,7 +57,7 @@ export default function Listen({ itemId, choiceIds, onDone }: Props) {
                 else playWrong();
               }}
             >
-              {displayParts(getItem(id)).main}
+              {text}
             </button>
           );
         })}

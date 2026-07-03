@@ -22,6 +22,7 @@ import {
   effectiveStreak,
   loadAppState,
   loadProgress,
+  recordActivity,
   requestPersistence,
   saveAppState,
   saveProgress,
@@ -146,6 +147,7 @@ export default function App() {
         : [...app.completedLessonIds, lessonId],
       xp: app.xp + xpGained,
       streak: bumpStreak(app.streak),
+      activity: recordActivity(app.activity, xpGained),
     };
     commit(nextProgress, nextApp);
     setScreen({ name: 'summary', xpGained, mistakes });
@@ -156,7 +158,12 @@ export default function App() {
   const finishPractice = (outcomes: ExerciseOutcome[]) => {
     const mistakes = outcomes.filter((o) => !o.correct).length;
     const xpGained = Math.max(2, outcomes.filter((o) => o.correct).length);
-    const nextApp: AppState = { ...app!, xp: app!.xp + xpGained, streak: bumpStreak(app!.streak) };
+    const nextApp: AppState = {
+      ...app!,
+      xp: app!.xp + xpGained,
+      streak: bumpStreak(app!.streak),
+      activity: recordActivity(app!.activity, xpGained),
+    };
     commit(progress, nextApp);
     setScreen({ name: 'summary', xpGained, mistakes });
   };
@@ -181,6 +188,7 @@ export default function App() {
       ...app,
       xp: app.xp + xpGained,
       streak: bumpStreak(app.streak),
+      activity: recordActivity(app.activity, xpGained),
     };
     commit(nextProgress, nextApp);
     setScreen({ name: 'summary', xpGained, mistakes });

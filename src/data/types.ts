@@ -46,6 +46,12 @@ export interface VocabItem {
    * ces kanji appris.
    */
   kanji?: string;
+  /**
+   * Domaine de l'item : les distracteurs de QCM privilégient le même tag
+   * ('nombre', 'heure', 'phrase'…). 'phrase' exclut aussi les exercices de
+   * frappe (trop longs) au profit de l'écoute et des QCM.
+   */
+  tag?: string;
 }
 
 export interface Lesson {

@@ -15,6 +15,8 @@ export interface AppState {
     /** Jour local 'YYYY-MM-DD' de la dernière activité. */
     lastActiveDay: string;
   };
+  /** XP gagné par jour local 'YYYY-MM-DD' (calendrier d'activité). */
+  activity: Record<string, number>;
   settings: {
     ttsEnabled: boolean;
     /** Sons de feedback (bonne/mauvaise réponse, fin de session). */
@@ -28,6 +30,7 @@ export const DEFAULT_APP_STATE: AppState = {
   completedLessonIds: [],
   xp: 0,
   streak: { current: 0, best: 0, lastActiveDay: '' },
+  activity: {},
   settings: { ttsEnabled: true, sfxEnabled: true },
 };
 
@@ -74,8 +77,18 @@ export async function loadAppState(): Promise<AppState> {
     ...DEFAULT_APP_STATE,
     ...stored,
     streak: { ...DEFAULT_APP_STATE.streak, ...stored.streak },
+    activity: { ...(stored.activity ?? {}) },
     settings: { ...DEFAULT_APP_STATE.settings, ...stored.settings },
   };
+}
+
+/** Ajoute l'XP d'une session au calendrier d'activité. */
+export function recordActivity(
+  activity: Record<string, number>,
+  xp: number,
+  today = localDay(),
+): Record<string, number> {
+  return { ...activity, [today]: (activity[today] ?? 0) + xp };
 }
 
 export function saveProgress(progress: ProgressMap): Promise<void> {

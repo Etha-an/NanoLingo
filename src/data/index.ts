@@ -6,6 +6,9 @@ import { KATAKANA } from './katakana';
 import { KANJI_N5 } from './kanji-n5';
 import { VOCAB } from './vocab';
 import { NAMES } from './names';
+import { KANJI_WORDS } from './kanji-words';
+import { NUMBERS } from './numbers';
+import { SENTENCES } from './sentences';
 import { UNITS } from './units';
 import { SIMILAR_GROUPS } from './similarity';
 
@@ -20,6 +23,9 @@ for (const item of KATAKANA) registry.set(item.id, { type: 'kana', ...item });
 for (const item of KANJI_N5) registry.set(item.id, { type: 'kanji', ...item });
 for (const item of VOCAB) registry.set(item.id, { type: 'vocab', ...item });
 for (const item of NAMES) registry.set(item.id, { type: 'vocab', ...item });
+for (const item of KANJI_WORDS) registry.set(item.id, { type: 'vocab', ...item });
+for (const item of NUMBERS) registry.set(item.id, { type: 'vocab', ...item });
+for (const item of SENTENCES) registry.set(item.id, { type: 'vocab', ...item });
 
 /** Un item peut disparaître du contenu (ex : sauvegarde restaurée après une
  * mise à jour) — la progression orpheline doit être ignorée, pas planter. */
@@ -64,6 +70,11 @@ export interface DisplayParts {
   main: string;
   /** Lecture en kana à afficher au-dessus (null : pas de furigana). */
   furigana: string | null;
+}
+
+/** Classe CSS du grand texte : caractère, mot ou phrase. */
+export function bigCharClass(text: string): string {
+  return text.length > 6 ? 'big-char sentence' : text.length > 1 ? 'big-char word' : 'big-char';
 }
 
 export function displayParts(item: StudyItem): DisplayParts {

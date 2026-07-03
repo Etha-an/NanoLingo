@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { displayParts, getItem, primaryLabel, spokenText } from '../data';
+import { bigCharClass, displayParts, getItem, primaryLabel, spokenText } from '../data';
 import type { ItemId } from '../data/types';
 import { speakJapanese, ttsAvailable } from '../audio/tts';
 import { playCorrect, playWrong } from '../audio/sfx';
@@ -46,7 +46,7 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
         (() => {
           const parts = displayParts(target);
           return (
-            <div className={`big-char${parts.main.length > 1 ? ' word' : ''}`}>
+            <div className={bigCharClass(parts.main)}>
               {parts.furigana ? (
                 <ruby>
                   {parts.main}
@@ -60,13 +60,14 @@ export default function Mcq({ itemId, direction, choiceIds, ttsEnabled, onDone }
         })()}
       <div className="choices">
         {choiceIds.map((id) => {
+          const text = choiceText(id);
           let className = 'choice';
-          if (direction === 'toChar') className += ' char';
+          if (direction === 'toChar' && text.length <= 3) className += ' char';
           if (answered && id === itemId) className += ' correct';
           if (answered && id === chosen && !correct) className += ' wrong';
           return (
             <button key={id} className={className} disabled={answered} onClick={() => select(id)}>
-              {choiceText(id)}
+              {text}
             </button>
           );
         })}

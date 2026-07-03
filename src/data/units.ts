@@ -249,4 +249,42 @@ export const UNITS: Unit[] = [
       { id: 'l-kanji-vl-4', title: 'Les études', newItemIds: ['kj-学', 'kj-語', 'kj-本', 'kj-何', 'kj-車'] },
     ],
   },
+
+  // ═══════════════════════ MOTS EN KANJI ═══════════════════════
+  {
+    id: 'u-kanji-words',
+    title: 'Mots en kanji',
+    icon: '🧩',
+    lessons: [
+      { id: 'l-kw-1', title: 'Pays et gens', newItemIds: ['kw-日本', 'kw-日本語', 'kw-中国', 'kw-外国', 'kw-外国人', 'kw-大人'] },
+      { id: 'l-kw-2', title: "L'école", newItemIds: ['kw-大学', 'kw-学生', 'kw-大学生', 'kw-小学校', 'kw-中学校', 'kw-高校'] },
+      { id: 'l-kw-3', title: 'Le temps qui passe', newItemIds: ['kw-毎日', 'kw-毎週', 'kw-今週', 'kw-来週', 'kw-今年', 'kw-天気'] },
+      { id: 'l-kw-4', title: 'Au quotidien', newItemIds: ['kw-時間', 'kw-半分', 'kw-入口', 'kw-出口', 'kw-電気', 'kw-人気'] },
+    ],
+  },
+
+  // ═══════════════════════ NOMBRES ET HEURES ═══════════════════════
+  {
+    id: 'u-numbers',
+    title: 'Nombres et heures',
+    icon: '🔢',
+    lessons: [
+      { id: 'l-nb-1', title: 'Les centaines', newItemIds: ['nb-百', 'nb-二百', 'nb-三百', 'nb-五百', 'nb-六百', 'nb-八百'] },
+      { id: 'l-nb-2', title: 'Milliers et prix', newItemIds: ['nb-千', 'nb-三千', 'nb-八千', 'nb-一万', 'nb-五百円', 'nb-千円'] },
+      { id: 'l-nb-3', title: "L'heure I", newItemIds: ['nb-一時', 'nb-二時', 'nb-二時半', 'nb-四時', 'nb-六時半'] },
+      { id: 'l-nb-4', title: "L'heure II", newItemIds: ['nb-七時', 'nb-九時', 'nb-十時', 'nb-午前十時', 'nb-午後三時'] },
+    ],
+  },
+
+  // ═══════════════════════ MINI-PHRASES ═══════════════════════
+  {
+    id: 'u-sentences',
+    title: 'Mini-phrases',
+    icon: '💬',
+    lessons: [
+      { id: 'l-ph-1', title: 'これは…です', newItemIds: ['ph-01', 'ph-02', 'ph-03', 'ph-04', 'ph-05', 'ph-06'] },
+      { id: 'l-ph-2', title: 'Les verbes en ます', newItemIds: ['ph-07', 'ph-08', 'ph-09', 'ph-10', 'ph-11', 'ph-12'] },
+      { id: 'l-ph-3', title: 'Où est… ?', newItemIds: ['ph-13', 'ph-14', 'ph-15', 'ph-16', 'ph-17', 'ph-18'] },
+    ],
+  },
 ];

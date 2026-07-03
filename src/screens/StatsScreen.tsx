@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { effectiveStreak, type AppState, type ProgressMap } from '../storage/db';
+import { effectiveStreak, localDay, type AppState, type ProgressMap } from '../storage/db';
 import { exportBackup, importBackup } from '../storage/backup';
 import { isMastered } from '../srs/sm2';
 import { speakJapanese, ttsDiagnostic } from '../audio/tts';
@@ -83,6 +83,29 @@ export default function StatsScreen({
           <div className="stats-value">{mastered}</div>
           <div className="stats-label">acquis (≥ 21 j)</div>
         </div>
+      </div>
+
+      <h2 className="dict-group-title">Activité des 16 dernières semaines</h2>
+      <div className="heatmap">
+        {(() => {
+          const cells = [];
+          const start = new Date();
+          start.setDate(start.getDate() - (16 * 7 - 1));
+          // aligne la première colonne sur un lundi
+          const pad = (start.getDay() + 6) % 7;
+          start.setDate(start.getDate() - pad);
+          const today = localDay();
+          for (const d = new Date(start); ; d.setDate(d.getDate() + 1)) {
+            const key = localDay(d);
+            const xp = app.activity[key] ?? 0;
+            const level = xp === 0 ? 0 : xp < 25 ? 1 : xp < 50 ? 2 : 3;
+            cells.push(
+              <div key={key} className={`hm-cell hm-${level}`} title={`${key} : ${xp} XP`} />,
+            );
+            if (key === today) break;
+          }
+          return cells;
+        })()}
       </div>
 
       <div className="settings-row">
