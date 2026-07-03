@@ -1,6 +1,8 @@
-// Petits sons de feedback synthétisés en WebAudio : aucun fichier audio,
-// fonctionne hors-ligne. Le contexte est créé paresseusement lors du premier
-// son — toujours déclenché par un geste utilisateur, ce qui satisfait iOS.
+// Sons de feedback synthétisés en WebAudio : aucun fichier audio, fonctionne
+// hors-ligne. Synthèse « marimba » : attaque percussive, décroissance
+// exponentielle, harmonique douce et filtre passe-bas pour un timbre chaud.
+// Le contexte est créé paresseusement lors du premier son — toujours
+// déclenché par un geste utilisateur, ce qui satisfait iOS.
 
 let enabled = true;
 let ctx: AudioContext | null = null;
@@ -16,71 +18,98 @@ function getContext(): AudioContext | null {
   return ctx;
 }
 
-interface Note {
+interface Tone {
   freq: number;
   /** Décalage du début, en secondes. */
   at: number;
   duration: number;
+  /** Glissando : la fréquence dérive vers cette valeur (son « womp »). */
+  slideTo?: number;
+  gain?: number;
+  type?: OscillatorType;
+  /** Ajoute une octave discrète au-dessus (timbre plus riche). */
+  sparkle?: boolean;
 }
 
-function play(notes: Note[], type: OscillatorType, volume: number): void {
+function play(tones: Tone[], cutoff: number, volume: number): void {
   if (!enabled) return;
   try {
     const audio = getContext();
     if (!audio) return;
-    const now = audio.currentTime;
-    for (const note of notes) {
+    const now = audio.currentTime + 0.01;
+
+    const master = audio.createGain();
+    master.gain.value = volume;
+    const filter = audio.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = cutoff;
+    filter.Q.value = 0.5;
+    master.connect(filter).connect(audio.destination);
+
+    const pluck = (freq: number, at: number, duration: number, gain: number, type: OscillatorType, slideTo?: number) => {
       const osc = audio.createOscillator();
-      const gain = audio.createGain();
+      const env = audio.createGain();
       osc.type = type;
-      osc.frequency.value = note.freq;
-      const start = now + note.at;
-      gain.gain.setValueAtTime(0, start);
-      gain.gain.linearRampToValueAtTime(volume, start + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.001, start + note.duration);
-      osc.connect(gain).connect(audio.destination);
+      const start = now + at;
+      osc.frequency.setValueAtTime(freq, start);
+      if (slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, start + duration);
+      env.gain.setValueAtTime(0, start);
+      env.gain.linearRampToValueAtTime(gain, start + 0.006);
+      env.gain.exponentialRampToValueAtTime(0.001, start + duration);
+      osc.connect(env).connect(master);
       osc.start(start);
-      osc.stop(start + note.duration + 0.02);
+      osc.stop(start + duration + 0.03);
+    };
+
+    for (const t of tones) {
+      const type = t.type ?? 'triangle';
+      const gain = t.gain ?? 1;
+      pluck(t.freq, t.at, t.duration, gain, type, t.slideTo);
+      if (t.sparkle ?? true) {
+        pluck(t.freq * 2, t.at, t.duration * 0.6, gain * 0.25, 'sine', t.slideTo ? t.slideTo * 2 : undefined);
+      }
     }
   } catch {
     // le son est un bonus
   }
 }
 
-/** Bonne réponse : deux notes montantes. */
+/** Bonne réponse : deux notes de marimba montantes (si → mi). */
 export function playCorrect(): void {
   play(
     [
-      { freq: 660, at: 0, duration: 0.12 },
-      { freq: 880, at: 0.1, duration: 0.18 },
+      { freq: 987.8, at: 0, duration: 0.16 },
+      { freq: 1318.5, at: 0.085, duration: 0.32 },
     ],
-    'sine',
-    0.18,
+    5200,
+    0.22,
   );
 }
 
-/** Mauvaise réponse : buzz grave descendant. */
+/** Mauvaise réponse : « womp » doux et descendant, sans agressivité. */
 export function playWrong(): void {
   play(
     [
-      { freq: 220, at: 0, duration: 0.15 },
-      { freq: 174, at: 0.13, duration: 0.22 },
+      { freq: 220, at: 0, duration: 0.22, slideTo: 165, type: 'sawtooth', sparkle: false },
+      { freq: 165, at: 0.18, duration: 0.3, slideTo: 116, type: 'sawtooth', sparkle: false },
     ],
-    'triangle',
-    0.16,
+    520,
+    0.34,
   );
 }
 
-/** Fin de session : petit arpège. */
+/** Fin de session : arpège de marimba do–mi–sol–do + accord final. */
 export function playFinish(): void {
   play(
     [
-      { freq: 523, at: 0, duration: 0.15 },
-      { freq: 659, at: 0.12, duration: 0.15 },
-      { freq: 784, at: 0.24, duration: 0.15 },
-      { freq: 1047, at: 0.36, duration: 0.3 },
+      { freq: 523.3, at: 0, duration: 0.28 },
+      { freq: 659.3, at: 0.09, duration: 0.28 },
+      { freq: 784, at: 0.18, duration: 0.3 },
+      { freq: 1046.5, at: 0.27, duration: 0.55 },
+      { freq: 1318.5, at: 0.27, duration: 0.5, gain: 0.4 },
+      { freq: 1568, at: 0.27, duration: 0.45, gain: 0.25 },
     ],
-    'sine',
-    0.16,
+    5600,
+    0.2,
   );
 }

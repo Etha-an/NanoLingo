@@ -31,12 +31,22 @@ export function speakJapanese(text: string): void {
   try {
     if (!jaVoice) pickVoice();
     window.speechSynthesis.cancel();
+    // Bug iOS connu : la synthèse peut rester en pause après un cancel.
+    window.speechSynthesis.resume();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'ja-JP';
     if (jaVoice) utterance.voice = jaVoice;
     utterance.rate = 0.85;
+    utterance.volume = 1;
     window.speechSynthesis.speak(utterance);
   } catch {
     // silencieux : le TTS est un bonus
   }
+}
+
+/** Diagnostic pour l'écran de réglages. */
+export function ttsDiagnostic(): { supported: boolean; voiceName: string | null } {
+  if (!ttsAvailable()) return { supported: false, voiceName: null };
+  pickVoice();
+  return { supported: true, voiceName: jaVoice ? `${jaVoice.name} (${jaVoice.lang})` : null };
 }

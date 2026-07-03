@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { effectiveStreak, type AppState, type ProgressMap } from '../storage/db';
 import { exportBackup, importBackup } from '../storage/backup';
 import { isMastered } from '../srs/sm2';
+import { speakJapanese, ttsDiagnostic } from '../audio/tts';
 
 interface Props {
   app: AppState;
@@ -22,6 +23,25 @@ export default function StatsScreen({
 }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+
+  const testVoice = () => {
+    const diag = ttsDiagnostic();
+    if (!diag.supported) {
+      setVoiceStatus("❌ La synthèse vocale n'est pas disponible sur ce navigateur.");
+      return;
+    }
+    speakJapanese('こんにちは');
+    if (diag.voiceName) {
+      setVoiceStatus(
+        `✅ Voix japonaise : ${diag.voiceName}. Si tu n'entends rien : désactive le mode silencieux (interrupteur orange) et monte le volume.`,
+      );
+    } else {
+      setVoiceStatus(
+        '⚠️ Aucune voix japonaise installée. Sur iPhone : Réglages ▸ Accessibilité ▸ Contenu énoncé ▸ Voix ▸ Japonais ▸ télécharge « Kyoko », puis relance l’app.',
+      );
+    }
+  };
 
   const entries = Object.values(progress);
   const mastered = entries.filter(isMastered).length;
@@ -78,6 +98,16 @@ export default function StatsScreen({
           {app.settings.sfxEnabled ? 'Activés' : 'Coupés'}
         </button>
       </div>
+
+      <div className="settings-row">
+        <span>🗣️ Voix japonaise</span>
+        <button className="btn btn-ghost" style={{ width: 'auto', padding: '8px 14px' }} onClick={testVoice}>
+          Tester
+        </button>
+      </div>
+      {voiceStatus && (
+        <p style={{ color: 'var(--muted)', fontWeight: 600, fontSize: 14, marginTop: -4 }}>{voiceStatus}</p>
+      )}
 
       <div className="settings-row">
         <span>💾 Sauvegarde de la progression</span>
