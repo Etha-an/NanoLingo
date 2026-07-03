@@ -33,10 +33,15 @@ export function speakJapanese(text: string): void {
     window.speechSynthesis.cancel();
     // Bug iOS connu : la synthèse peut rester en pause après un cancel.
     window.speechSynthesis.resume();
-    const utterance = new SpeechSynthesisUtterance(text);
+    // iOS tronque souvent le tout début de la synthèse : sur un kana isolé
+    // (あ, い…) il ne reste presque rien d'audible. Une virgule japonaise en
+    // tête crée une pause muette qui absorbe la troncature, et un débit plus
+    // lent allonge le son lui-même.
+    const isShort = [...text].length <= 2;
+    const utterance = new SpeechSynthesisUtterance(isShort ? `、${text}` : text);
     utterance.lang = 'ja-JP';
     if (jaVoice) utterance.voice = jaVoice;
-    utterance.rate = 0.85;
+    utterance.rate = isShort ? 0.55 : 0.85;
     utterance.volume = 1;
     window.speechSynthesis.speak(utterance);
   } catch {
