@@ -8,6 +8,8 @@ interface Props {
   itemId: ItemId;
   choiceIds: ItemId[];
   onDone: (correct: boolean) => void;
+  /** Aucun son audible (mode silencieux, voix indisponible) : remplacer l'exercice. */
+  onFallback: () => void;
 }
 
 /**
@@ -15,7 +17,7 @@ interface Props {
  * choisit ce qu'on a entendu. Généré uniquement quand une voix japonaise
  * est disponible.
  */
-export default function Listen({ itemId, choiceIds, onDone }: Props) {
+export default function Listen({ itemId, choiceIds, onDone, onFallback }: Props) {
   const [chosen, setChosen] = useState<ItemId | null>(null);
   const target = getItem(itemId);
   const answered = chosen !== null;
@@ -40,6 +42,11 @@ export default function Listen({ itemId, choiceIds, onDone }: Props) {
           🔊
         </button>
       </div>
+      {!answered && (
+        <button className="listen-fallback" onClick={onFallback}>
+          Je n'entends rien
+        </button>
+      )}
       <div className="choices">
         {choiceIds.map((id) => {
           const text = displayParts(getItem(id)).main;

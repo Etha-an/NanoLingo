@@ -67,7 +67,9 @@ export default function TypeAnswer({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') submit();
+          // Sur clavier japonais, Entrée sert d'abord à CONFIRMER la
+          // composition IME (keyCode 229) : ne pas valider la réponse là.
+          if (e.key === 'Enter' && !e.nativeEvent.isComposing && e.keyCode !== 229) submit();
         }}
         placeholder={placeholder}
         lang={lang}

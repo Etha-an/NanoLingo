@@ -3,6 +3,7 @@ import { effectiveStreak, localDay, type AppState, type ProgressMap } from '../s
 import { exportBackup, importBackup } from '../storage/backup';
 import { isMastered } from '../srs/sm2';
 import { speakJapanese, ttsDiagnostic } from '../audio/tts';
+import { hasItem } from '../data';
 
 interface Props {
   app: AppState;
@@ -43,7 +44,8 @@ export default function StatsScreen({
     }
   };
 
-  const entries = Object.values(progress);
+  // Ignore la progression orpheline (items disparus d'une version du contenu).
+  const entries = Object.values(progress).filter((p) => hasItem(p.itemId));
   const mastered = entries.filter(isMastered).length;
 
   const handleImport = async (file: File | undefined) => {

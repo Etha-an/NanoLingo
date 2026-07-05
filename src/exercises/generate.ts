@@ -36,6 +36,19 @@ export function isTypable(item: StudyItem): boolean {
   return true;
 }
 
+/** L'écoute vaut pour tout sauf les kanji isolés (lecture ambiguë) — les
+ * phrases en particulier sont un excellent exercice de compréhension orale. */
+export function isListenable(item: StudyItem): boolean {
+  return item.type !== 'kanji';
+}
+
+/** Clé sonore d'un romaji : deux items qui SONNENT pareil ne doivent jamais
+ * s'affronter dans un exercice d'écoute (を se lit « o » comme お). */
+function soundKey(romaji: string): string {
+  const s = romaji.toLowerCase();
+  return s === 'wo' ? 'o' : s;
+}
+
 // Les macrons (ō, ū…) ne se tapent pas sur un clavier normal : on accepte
 // les équivalents usuels (kōhī → kohi, koohii, kouhii…).
 const MACRON_VARIANTS: Record<string, string[]> = {
@@ -46,9 +59,15 @@ const MACRON_VARIANTS: Record<string, string[]> = {
   ū: ['u', 'uu'],
 };
 
-/** Réponses rōmaji acceptées pour un item (en minuscules). */
+/** Normalisation d'une saisie rōmaji : casse, espaces et apostrophes
+ * (« sen'en », « gozen jūji ») ne doivent pas compter. */
+export function normalizeRomaji(input: string): string {
+  return input.toLowerCase().replace(/[\s'’-]/g, '');
+}
+
+/** Réponses rōmaji acceptées pour un item (normalisées). */
 export function romajiAnswers(item: StudyItem): Set<string> {
-  const base = item.type === 'kanji' ? '' : item.romaji.toLowerCase();
+  const base = item.type === 'kanji' ? '' : normalizeRomaji(item.romaji);
   let forms = [''];
   for (const ch of base) {
     const variants = MACRON_VARIANTS[ch] ?? [ch];
@@ -89,7 +108,7 @@ function pickDistractors(target: StudyItem, forListening = false): ItemId[] {
       forListening &&
       candidate.type !== 'kanji' &&
       target.type !== 'kanji' &&
-      candidate.romaji.toLowerCase() === target.romaji.toLowerCase()
+      soundKey(candidate.romaji) === soundKey(target.romaji)
     )
       return false;
     if (primaryLabel(candidate) === targetLabel) return false;
@@ -156,7 +175,7 @@ export function generateLesson(
     queue.push({ kind: 'intro', itemId });
   }
   for (const itemId of shuffle(lesson.newItemIds)) {
-    if (listenOk && isTypable(getItem(itemId)) && Math.random() < 0.5) {
+    if (listenOk && isListenable(getItem(itemId)) && Math.random() < 0.5) {
       queue.push(makeListen(itemId));
     } else {
       queue.push(makeMcq(itemId, 'toLabel'));
@@ -217,10 +236,8 @@ export function generateReview(
 function pickRecognition(itemId: ItemId, listenOk: boolean): Exercise {
   const item = getItem(itemId);
   const roll = Math.random();
-  if (isTypable(item)) {
-    if (listenOk && roll < 0.33) return makeListen(itemId);
-    if (roll < 0.66) return { kind: 'typeRomaji', itemId };
-  }
+  if (listenOk && isListenable(item) && roll < 0.33) return makeListen(itemId);
+  if (isTypable(item) && roll < 0.66) return { kind: 'typeRomaji', itemId };
   return makeMcq(itemId, Math.random() < 0.5 ? 'toLabel' : 'toChar');
 }
 
@@ -316,8 +333,12 @@ export function generatePractice(
   for (const itemId of itemIds.filter(hasItem).slice(0, 10)) {
     const item = getItem(itemId);
     const interval = progress[itemId]?.intervalDays ?? 0;
-    queue.push(pickRecognition(itemId, listenOk));
-    queue.push(makeMcq(itemId, 'toChar'));
+    const first = pickRecognition(itemId, listenOk);
+    queue.push(first);
+    // Évite deux QCM identiques pour le même item dans la même session.
+    const secondDirection =
+      first.kind === 'mcq' && first.direction === 'toChar' ? 'toLabel' : 'toChar';
+    queue.push(makeMcq(itemId, secondDirection));
     if (isTraceable(item, strokeChars)) {
       queue.push({ kind: 'trace', itemId, showOutline: interval < 3 });
     } else if (item.type === 'vocab' && item.tag !== 'phrase' && interval > 7) {

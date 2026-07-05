@@ -449,6 +449,11 @@ ruby rt {
   font-weight: 700;
 }
 
+/* Les phrases sont déjà petites (32px) : furigana plus généreux pour rester lisible. */
+.big-char.sentence rt {
+  font-size: 0.4em;
+}
+
 /* ---- Écoute ---- */
 
 .listen-wrap {
@@ -472,6 +477,15 @@ ruby rt {
 .listen-btn:active {
   transform: translateY(3px);
   box-shadow: 0 3px 0 var(--blue-shadow);
+}
+
+.listen-fallback {
+  align-self: center;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  padding: 4px 8px;
 }
 
 /* ---- Dictionnaire ---- */

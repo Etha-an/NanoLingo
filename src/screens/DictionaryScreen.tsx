@@ -157,6 +157,12 @@ export default function DictionaryScreen({
         </div>
       )}
 
+      {normalizedQuery && learned.filter(matches).length === 0 && (
+        <p style={{ color: 'var(--muted)', fontWeight: 700 }}>
+          Aucun résultat pour « {query.trim()} ».
+        </p>
+      )}
+
       {GROUPS.map((group) => {
         const items = learned.filter((i) => group.match(i) && matches(i));
         if (items.length === 0) return null;

@@ -14,7 +14,9 @@ export function setSfxEnabled(value: boolean): void {
 function getContext(): AudioContext | null {
   if (typeof window === 'undefined' || !('AudioContext' in window)) return null;
   ctx ??= new AudioContext();
-  if (ctx.state === 'suspended') void ctx.resume();
+  // Safari iOS passe le contexte en 'interrupted' (appel, Siri, arrière-plan)
+  // et ne le relance pas seul : relancer dès qu'il n'est pas 'running'.
+  if (ctx.state !== 'running') void ctx.resume();
   return ctx;
 }
 

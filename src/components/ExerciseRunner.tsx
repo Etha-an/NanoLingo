@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { Exercise, ExerciseOutcome } from '../exercises/types';
-import { makeMcq, romajiAnswers } from '../exercises/generate';
+import { makeMcq, normalizeRomaji, romajiAnswers } from '../exercises/generate';
 import { getItem, primaryLabel, displayChars, displayParts, spokenText } from '../data';
 import Flashcard from './Flashcard';
 import Listen from './Listen';
@@ -54,7 +54,11 @@ export default function ExerciseRunner({
     }
   };
 
-  const recordAndAdvance = (correct: boolean, extra?: Partial<ExerciseOutcome>) => {
+  const recordAndAdvance = (
+    correct: boolean,
+    extra?: Partial<ExerciseOutcome>,
+    allowRequeue = true,
+  ) => {
     if (!current || current.kind === 'info') return;
     let nextOutcomes = outcomes;
     if (!current.isRetry) {
@@ -62,16 +66,37 @@ export default function ExerciseRunner({
       setOutcomes(nextOutcomes);
     }
     // Une erreur ré-empile l'exercice en fin de file (même s'il était déjà
-    // une reprise) : la session ne se termine que sur un succès.
+    // une reprise) : la session ne se termine que sur un succès. Exception :
+    // le tracé (le quiz a déjà montré la correction, inutile de le refaire).
     let nextQueue = queue;
-    if (!correct) {
+    if (!correct && allowRequeue) {
       nextQueue = [...queue, { ...current, isRetry: true }];
       setQueue(nextQueue);
     }
     advance(nextQueue, nextOutcomes);
   };
 
-  if (!current) return null;
+  // File frappée par exercice : figée par useMemo pour qu'une rotation ne
+  // recrée pas le quiz de tracé en plein exercice.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const traceSize = useMemo(() => Math.min(320, window.innerWidth - 64), [idx]);
+
+  if (!current) {
+    // File vide (ex : progression orpheline) : garder une porte de sortie.
+    return (
+      <div className="screen">
+        <div className="session-top">
+          <button className="quit-btn" aria-label="Quitter" onClick={onQuit}>
+            ✕
+          </button>
+          <div className="progress-track">
+            <div className="progress-fill" />
+          </div>
+        </div>
+        <div className="loading">Rien à réviser ici pour le moment.</div>
+      </div>
+    );
+  }
 
   return (
     <div className="screen">
@@ -157,7 +182,7 @@ export default function ExerciseRunner({
               display={display}
               displaySmall={display.length > 1}
               placeholder="romaji…"
-              accept={(input) => accepted.has(input.toLowerCase())}
+              accept={(input) => accepted.has(normalizeRomaji(input))}
               correctAnswer={item.type === 'kanji' ? primaryLabel(item) : item.romaji}
               ttsText={spokenText(item)}
               ttsEnabled={ttsEnabled}
@@ -177,7 +202,6 @@ export default function ExerciseRunner({
               hint="Utilise le clavier japonais 🇯🇵 (à activer dans Réglages ▸ Général ▸ Clavier)"
               display={item.meaningFr}
               displaySmall
-              sub={item.romaji}
               placeholder="かな…"
               lang="ja"
               accept={(input) => input === item.kana || (!!item.kanji && input === item.kanji)}
@@ -195,6 +219,12 @@ export default function ExerciseRunner({
           itemId={current.itemId}
           choiceIds={current.choiceIds}
           onDone={(correct) => recordAndAdvance(correct)}
+          onFallback={() => {
+            // Pas de son (mode silencieux, voix indisponible…) : remplace par
+            // un QCM visuel équivalent, sans pénaliser l'utilisateur.
+            const replacement = { ...makeMcq(current.itemId, 'toLabel'), isRetry: current.isRetry };
+            setQueue((q) => q.map((e, i) => (i === idx ? replacement : e)));
+          }}
         />
       )}
 
@@ -204,7 +234,7 @@ export default function ExerciseRunner({
           <div className="trace-wrap">
             <StrokeQuiz
               char={displayChars(getItem(current.itemId))}
-              size={Math.min(320, window.innerWidth - 64)}
+              size={traceSize}
               showOutline={current.showOutline}
               onComplete={(r) => {
                 playCorrect();
@@ -228,12 +258,17 @@ export default function ExerciseRunner({
             <div className="session-footer" style={{ marginTop: 'auto' }}>
               <button
                 className="btn btn-primary"
-                onClick={() =>
-                  recordAndAdvance(true, {
-                    mistakes: traceDone.mistakes,
-                    usedHint: traceDone.usedHint,
-                  })
-                }
+                onClick={() => {
+                  // Un tracé de mémoire (sans modèle) terminé à coups d'indices
+                  // = oubli : compte comme raté pour la répétition espacée,
+                  // sans refaire l'exercice (la correction a déjà été montrée).
+                  const failed = !current.showOutline && traceDone.usedHint;
+                  recordAndAdvance(
+                    !failed,
+                    { mistakes: traceDone.mistakes, usedHint: traceDone.usedHint },
+                    false,
+                  );
+                }}
               >
                 Continuer
               </button>

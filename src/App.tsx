@@ -79,10 +79,11 @@ export default function App() {
   };
 
   const reloadFromDb = () => {
+    // Recharge sans changer d'écran : le message « Sauvegarde restaurée ✓ »
+    // de l'écran stats reste visible.
     Promise.all([loadProgress(), loadAppState()]).then(([p, a]) => {
       setProgress(p);
       setApp(a);
-      setScreen({ name: 'home' });
     });
   };
 
@@ -180,7 +181,10 @@ export default function App() {
     const nextProgress = { ...progress };
     for (const [itemId, q] of qualityByItem) {
       const entry = nextProgress[itemId];
-      if (entry) nextProgress[itemId] = applyReview(entry, q, now);
+      // Seuls les items réellement DUS avancent dans le planning : une récap
+      // qui ressort un item appris hier ne doit pas gonfler son intervalle
+      // (réviser en avance ne prouve pas la rétention espacée).
+      if (entry && entry.dueAt <= now) nextProgress[itemId] = applyReview(entry, q, now);
     }
     const mistakes = outcomes.filter((o) => !o.correct).length;
     const xpGained = Math.max(5, qualityByItem.size * 2 - 2 * mistakes);
@@ -202,7 +206,7 @@ export default function App() {
           xp={app.xp}
           streak={effectiveStreak(app.streak)}
           dueCount={knownDueIds(progress).length}
-          learnedCount={Object.keys(progress).length}
+          learnedCount={Object.keys(progress).filter(hasItem).length}
           onOpenLesson={(lessonId) => setScreen({ name: 'lesson', lessonId })}
           onOpenReview={() => setScreen({ name: 'review' })}
           onOpenRecap={() => setScreen({ name: 'recap' })}
